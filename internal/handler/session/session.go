@@ -30,7 +30,7 @@ func New(sessionUsecase sessionUsecase) *Handler {
 	}
 }
 
-func (h *Handler) CheckTokenAPI(c *gin.Context) {
+func (h *Handler) AuthCheck(c *gin.Context) {
 	if isWhitelistedPath(c.FullPath()) {
 		c.Next()
 		return
@@ -41,17 +41,7 @@ func (h *Handler) CheckTokenAPI(c *gin.Context) {
 		c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("Unauthorized"))
 	}
 
-	// 0 = OK
-	// 1 = Token id is empty, need signin
-	// 2 = Not registered in database
-	_, res := h.sessionUc.CheckTokenAuth(ctx, r)
-	if res == 0 {
-		next(w, r)
-	} else if res == 1 || res == 2 {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	} else if res == 3 {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-	}
+	
 }
 
 func (h *Handler) CheckTokenAuth(w http.ResponseWriter, r *http.Request) {
