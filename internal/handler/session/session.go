@@ -1,16 +1,20 @@
-package session
+package sessionhandler
 
 import (
-	"context"
+	sessiondomain "dromatech/pos-backend/internal/domain/session"
+	restutil "dromatech/pos-backend/internal/util/rest"
 	"fmt"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
+	"github.com/tidwall/gjson"
+	"io/ioutil"
+	"net/http"
 )
 
 type sessionUsecase interface {
-	CheckTokenAuth(ctx context.Context, r *http.Request) (string, int)
-	Logout(ctx context.Context, r *http.Request) error
+	Login(username string, password string) (*sessiondomain.Session, error)
+	Logout(token string)
+	AuthCheck(token string, requestorPath string) (string, int, *sessiondomain.Session)
+	GetSession(token string) *sessiondomain.Session
 }
 
 // Handler defines the handler
@@ -19,9 +23,10 @@ type Handler struct {
 }
 
 var WhitelistPath = map[string]bool{
-	"/api/auth":        true,
-	"/ping":            true,
-	"/api/auth/logout": true,
+	"/auth/login":   true,
+	"/auth/logout":  true,
+	"/auth/getmenu": true,
+	"/ping":         true,
 }
 
 func New(sessionUsecase sessionUsecase) *Handler {
@@ -31,66 +36,68 @@ func New(sessionUsecase sessionUsecase) *Handler {
 }
 
 func (h *Handler) AuthCheck(c *gin.Context) {
-	if isWhitelistedPath(c.FullPath()) {
+	path := c.FullPath()
+	if isWhitelistedPath(path) {
 		c.Next()
 		return
 	}
 
-	token := c.Param("udtj_token")
+	token := c.GetHeader("token")
+	url, status, session := h.sessionUc.AuthCheck(token, path)
+	if status == 200 {
+		c.Set("session", session)
+		c.Next()
+		return
+	} else {
+		c.Redirect(status, url)
+	}
+}
+
+func (h *Handler) Login(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+	}
+
+	username := gjson.Get(string(jsonData), "username")
+	if !username.Exists() || username.String() == "" {
+		c.JSON(http.StatusOK, restutil.CreateResponseJson(1, "Harap isi username", nil))
+		return
+	}
+	password := gjson.Get(string(jsonData), "password")
+	if !password.Exists() || password.String() == "" {
+		c.JSON(http.StatusOK, restutil.CreateResponseJson(1, "Harap isi password", nil))
+		return
+	}
+
+	session, err := h.sessionUc.Login(username.String(), password.String())
+	if err != nil {
+		c.JSON(http.StatusOK, restutil.CreateResponse(1, err.Error(), nil))
+		return
+	}
+
+	c.JSON(http.StatusOK, restutil.CreateResponse(0, "", session))
+}
+
+func (h *Handler) Logout(c *gin.Context) {
+	token := c.Param("token")
+	h.sessionUc.Logout(token)
+}
+
+func (h *Handler) GetMenu(c *gin.Context) {
+	token := c.GetHeader("token")
 	if token == "" {
-		c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("Unauthorized"))
+		restutil.RedirectToUnuthorized(c)
+		return
 	}
 
-	
-}
-
-func (h *Handler) CheckTokenAuth(w http.ResponseWriter, r *http.Request) {
-	var (
-		span, ctx = tracer.StartFromRequest(r)
-	)
-	defer span.Finish()
-
-	// 0 = OK
-	// 1 = Token id is empty, need signin
-	// 2 = Failed get info to google
-	// 3 = Not registered in database
-	redirectUrl, flag := h.sessionUc.CheckTokenAuth(ctx, r)
-	switch flag {
-	case 0:
-		// OK continue
-		if _, err := response.WriteJSONAPIData(w, r, http.StatusOK, ""); err != nil {
-			h.commonLog.Errorf("[session.CheckAuthToken] error from WriteJSON: ", err)
-		}
-	case 1:
-		// empty token redirect to login page
-		if _, err := response.WriteJSONAPIData(w, r, http.StatusUnauthorized, redirectUrl); err != nil {
-			h.commonLog.Errorf("[session.CheckAuthToken] error from WriteJSON: ", err)
-		}
-	case 2:
-		// failed get info to google redirect to login page
-		if _, err := response.WriteJSONAPIData(w, r, http.StatusUnauthorized, redirectUrl); err != nil {
-			h.commonLog.Errorf("[session.CheckAuthToken] error from WriteJSON: ", err)
-		}
-	case 3:
-		// forbidden redirect forbidden page
-		if _, err := response.WriteJSONAPIData(w, r, http.StatusForbidden, redirectUrl); err != nil {
-			h.commonLog.Errorf("[session.CheckAuthToken] error from WriteJSON: ", err)
-		}
-	default:
-		// default redirect to login page
-		if _, err := response.WriteJSONAPIData(w, r, http.StatusUnauthorized, redirectUrl); err != nil {
-			h.commonLog.Errorf("[session.CheckAuthToken] error from WriteJSON: ", err)
-		}
+	session := h.sessionUc.GetSession(token)
+	if session == nil {
+		restutil.RedirectToUnuthorized(c)
+		return
 	}
-}
 
-func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
-	var (
-		span, ctx = tracer.StartFromRequest(r)
-	)
-	defer span.Finish()
-
-	h.sessionUc.Logout(ctx, r)
+	c.JSON(http.StatusOK, restutil.CreateResponseOk(session))
 }
 
 func isWhitelistedPath(path string) bool {

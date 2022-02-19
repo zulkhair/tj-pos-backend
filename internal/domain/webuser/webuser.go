@@ -20,5 +20,5 @@ type WebUser struct {
 
 type WebUserCache struct {
 	sync.RWMutex
-	DataMap map[string]WebUser
+	DataMap map[string]*WebUser
 }

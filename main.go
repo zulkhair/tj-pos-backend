@@ -38,5 +38,8 @@ func main() {
 	}
 	global.DBCON = db
 
-	app.StartApp()
+	err = app.StartApp()
+	if err != nil {
+		logrus.Error(err.Error())
+	}
 }
