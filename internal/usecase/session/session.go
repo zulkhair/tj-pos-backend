@@ -110,7 +110,7 @@ func (uc *Usecase) Login(username string, password string) (*sessiondomain.Sessi
 		logrus.Error(err.Error())
 	}
 
-	token := uuid.NewString()
+	token := strings.ReplaceAll(uuid.NewString(), "-", "")
 	minute, _ := strconv.Atoi(uc.configRepo.GetValue(configdomain.SESSION_TIMEOUT_MINUTE))
 	expiredTime := time.Now().Add(time.Minute * time.Duration(minute))
 
@@ -181,6 +181,7 @@ func (uc *Usecase) Logout(token string) {
 
 func (uc *Usecase) GetSession(token string) *sessiondomain.Session {
 	if session, ok := uc.sessionCache.DataMap[token]; ok {
+		session.ExpiredTime = time.Now().Add(time.Minute * time.Duration(global.SESSION_TIMEOUT_MINUTE))
 		return session
 	}
 	return nil

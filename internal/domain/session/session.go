@@ -8,6 +8,7 @@ import (
 type Menu struct {
 	Name    string    `json:"name"`
 	Icon    string    `json:"icon"`
+	Path    string    `json:"path"`
 	SubMenu []SubMenu `json:"subMenu"`
 }
 

@@ -23,10 +23,12 @@ type Handler struct {
 }
 
 var WhitelistPath = map[string]bool{
-	"/auth/login":   true,
-	"/auth/logout":  true,
-	"/auth/getmenu": true,
-	"/ping":         true,
+	"/api/auth/login":           true,
+	"/api/auth/logout":          true,
+	"/api/auth/getmenu":         true,
+	"/api/user/edit":            true,
+	"/api/user/change-password": true,
+	"/api/ping":                 true,
 }
 
 func New(sessionUsecase sessionUsecase) *Handler {
@@ -37,15 +39,21 @@ func New(sessionUsecase sessionUsecase) *Handler {
 
 func (h *Handler) AuthCheck(c *gin.Context) {
 	path := c.FullPath()
+	token := c.GetHeader("token")
 	if isWhitelistedPath(path) {
+		if token != "" {
+			session := h.sessionUc.GetSession(token)
+			if session != nil {
+				restutil.SetSession(c, session)
+			}
+		}
 		c.Next()
 		return
 	}
-
-	token := c.GetHeader("token")
+	
 	url, status, session := h.sessionUc.AuthCheck(token, path)
 	if status == 200 {
-		c.Set("session", session)
+		restutil.SetSession(c, session)
 		c.Next()
 		return
 	} else {
@@ -61,12 +69,12 @@ func (h *Handler) Login(c *gin.Context) {
 
 	username := gjson.Get(string(jsonData), "username")
 	if !username.Exists() || username.String() == "" {
-		c.JSON(http.StatusOK, restutil.CreateResponseJson(1, "Harap isi username", nil))
+		c.JSON(http.StatusOK, restutil.CreateResponse(1, "Harap isi username", nil))
 		return
 	}
 	password := gjson.Get(string(jsonData), "password")
 	if !password.Exists() || password.String() == "" {
-		c.JSON(http.StatusOK, restutil.CreateResponseJson(1, "Harap isi password", nil))
+		c.JSON(http.StatusOK, restutil.CreateResponse(1, "Harap isi password", nil))
 		return
 	}
 
@@ -80,24 +88,25 @@ func (h *Handler) Login(c *gin.Context) {
 }
 
 func (h *Handler) Logout(c *gin.Context) {
-	token := c.Param("token")
+	token := c.GetHeader("token")
 	h.sessionUc.Logout(token)
+	restutil.SendResponseOk(c, "Berhasil logout", nil)
 }
 
 func (h *Handler) GetMenu(c *gin.Context) {
 	token := c.GetHeader("token")
 	if token == "" {
-		restutil.RedirectToUnuthorized(c)
+		c.JSON(http.StatusOK, restutil.CreateResponse(1, "Harap melakukan login terlebih dahulu", nil))
 		return
 	}
 
 	session := h.sessionUc.GetSession(token)
 	if session == nil {
-		restutil.RedirectToUnuthorized(c)
+		c.JSON(http.StatusOK, restutil.CreateResponse(1, "Harap melakukan login terlebih dahulu", nil))
 		return
 	}
 
-	c.JSON(http.StatusOK, restutil.CreateResponseOk(session))
+	restutil.SendResponseOk(c, "", session)
 }
 
 func isWhitelistedPath(path string) bool {

@@ -2,6 +2,7 @@ package restutil
 
 import (
 	"dromatech/pos-backend/global"
+	sessiondomain "dromatech/pos-backend/internal/domain/session"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -28,8 +29,12 @@ func CreateResponseJson(status int, message string, data interface{}) string {
 	return string(json)
 }
 
-func CreateResponseOk(data interface{}) Response {
-	return CreateResponse(0, "", data)
+func CreateResponseOk(msg string, data interface{}) Response {
+	return CreateResponse(0, msg, data)
+}
+
+func SendResponseOk(c *gin.Context, msg string, data interface{}) {
+	c.JSON(http.StatusOK, CreateResponseOk(msg, data))
 }
 
 func RedirectToLogin(c *gin.Context) {
@@ -42,4 +47,22 @@ func RedirectToUnuthorized(c *gin.Context) {
 
 func RedirectToForbidden(c *gin.Context) {
 	c.Redirect(http.StatusMovedPermanently, global.FORBIDDEN_URL)
+}
+
+func CloseContext(c *gin.Context) {
+	if !c.IsAborted() {
+		c.Abort()
+	}
+}
+
+func SetSession(c *gin.Context, session *sessiondomain.Session) {
+	c.Set("session", session)
+}
+
+func GetSession(c *gin.Context) *sessiondomain.Session {
+	if session, ok := c.Get("session"); ok {
+		return session.(*sessiondomain.Session)
+	}
+
+	return nil
 }

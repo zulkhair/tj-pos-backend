@@ -71,7 +71,7 @@ func (r *Repo) Find(id string) *roledomain.Role {
 }
 
 func (r *Repo) FindMenu(roleId string) ([]*sessiondomain.Menu, error) {
-	rows, err := global.DBCON.Raw("SELECT m.name, m.icon, p.name, p.outcome,p.icon FROM menu m "+
+	rows, err := global.DBCON.Raw("SELECT m.name, m.icon, m.menu_path, p.name, p.outcome, p.icon FROM menu m "+
 		"JOIN menu_permission mp ON (m.id = mp.menu_id) "+
 		"JOIN permission p ON (mp.permission_id = p.id) "+
 		"JOIN role_permission rp ON (p.id = rp.permission_id) "+
@@ -90,16 +90,18 @@ func (r *Repo) FindMenu(roleId string) ([]*sessiondomain.Menu, error) {
 	for rows.Next() {
 		var menuName sql.NullString
 		var menuIcon sql.NullString
+		var menuPath sql.NullString
 		var perName sql.NullString
 		var perOutcome sql.NullString
 		var perIcon sql.NullString
 
-		rows.Scan(&menuName, &menuIcon, &perName, &perOutcome, &perIcon)
+		rows.Scan(&menuName, &menuIcon, &menuPath, &perName, &perOutcome, &perIcon)
 
 		if menu.Name != menuName.String {
 			menu = &sessiondomain.Menu{
 				Name:    menuName.String,
 				Icon:    menuIcon.String,
+				Path:    menuPath.String,
 				SubMenu: nil,
 			}
 			menus = append(menus, menu)

@@ -12,6 +12,8 @@ type WebUserRepo interface {
 	ReInitCache() error
 	Find(id string) *webuserdomain.WebUser
 	FindByUsername(username string) *webuserdomain.WebUser
+	EditUser(*webuserdomain.WebUser)
+	ChangePassword(userId string, newPassword string)
 }
 
 type Repo struct {
@@ -163,4 +165,16 @@ func (r *Repo) FindByUsername(username string) *webuserdomain.WebUser {
 	}
 
 	return user
+}
+
+func (r *Repo) EditUser(webUser *webuserdomain.WebUser) {
+	global.DBCON.Exec("UPDATE public.web_user "+
+		"SET name=? "+
+		"WHERE id=?;", webUser.Name, webUser.ID)
+}
+
+func (r *Repo) ChangePassword(userId string, newPassword string) {
+	global.DBCON.Exec("UPDATE public.web_user "+
+		"SET password_hash=? "+
+		"WHERE id=?;", newPassword, userId)
 }

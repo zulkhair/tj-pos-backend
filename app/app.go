@@ -5,11 +5,13 @@ import (
 	configdomain "dromatech/pos-backend/internal/domain/config"
 	pinghandler "dromatech/pos-backend/internal/handler/ping"
 	sessionhandler "dromatech/pos-backend/internal/handler/session"
+	webuserhandler "dromatech/pos-backend/internal/handler/webuser"
 	configrepo "dromatech/pos-backend/internal/repo/config"
 	permissionrepo "dromatech/pos-backend/internal/repo/permission"
 	rolerepo "dromatech/pos-backend/internal/repo/role"
 	webuserrepo "dromatech/pos-backend/internal/repo/webuser"
 	sessionusecase "dromatech/pos-backend/internal/usecase/session"
+	webuserusecase "dromatech/pos-backend/internal/usecase/webuser"
 	"fmt"
 	"strconv"
 )
@@ -17,6 +19,7 @@ import (
 type AppHandler struct {
 	pingHandler    *pinghandler.Handler
 	sessionHandler *sessionhandler.Handler
+	webUserHander  *webuserhandler.Handler
 }
 
 func StartApp() error {
@@ -51,14 +54,17 @@ func StartApp() error {
 
 	// init usecase
 	sessionUsecase := sessionusecase.New(configRepo, webuserRepo, permissionRepo, roleRepo)
+	webUserUsecase := webuserusecase.New(webuserRepo)
 
 	// init Handler
 	pingHandler := pinghandler.New()
 	sessionHandler := sessionhandler.New(sessionUsecase)
+	webUserHander := webuserhandler.New(webUserUsecase)
 
 	appHandler := AppHandler{
 		pingHandler:    pingHandler,
 		sessionHandler: sessionHandler,
+		webUserHander:  webUserHander,
 	}
 
 	router := newRoutes(appHandler)
