@@ -1,7 +1,6 @@
 package roledomain
 
 import (
-	permissiondomain "dromatech/pos-backend/internal/domain/permission"
 	"sync"
 )
 
@@ -11,12 +10,12 @@ type Role struct {
 	Active bool   `json:"active"`
 }
 
+type RoleActive struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type RoleCache struct {
 	sync.RWMutex
 	DataMap map[string]*Role
-}
-
-type RoleMenuPermissionCache struct {
-	sync.RWMutex
-	DataMap map[string][]*permissiondomain.Permission
 }

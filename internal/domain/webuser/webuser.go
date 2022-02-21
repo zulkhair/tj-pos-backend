@@ -22,3 +22,10 @@ type WebUserCache struct {
 	sync.RWMutex
 	DataMap map[string]*WebUser
 }
+
+type RegisterWebUser struct {
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Password string `json:"Password"`
+	RoleId   string `json:"roleId"`
+}

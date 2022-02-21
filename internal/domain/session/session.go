@@ -22,10 +22,12 @@ type Session struct {
 	Token       string    `json:"token"`
 	ExpiredTime time.Time `json:"-"`
 	UserID      string    `json:"-"`
+	RoleID      string    `json:"-"`
 	UserName    string    `json:"username"`
 	Name        string    `json:"name"`
 	RoleName    string    `json:"roleName"`
 	Menu        []*Menu   `json:"menu"`
+	Permissions []string  `json:"-"`
 }
 
 type SessionCache struct {

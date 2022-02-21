@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"dromatech/pos-backend/global"
 	configdomain "dromatech/pos-backend/internal/domain/config"
-	permissiondomain "dromatech/pos-backend/internal/domain/permission"
 	roledomain "dromatech/pos-backend/internal/domain/role"
 	sessiondomain "dromatech/pos-backend/internal/domain/session"
 	webuserdomain "dromatech/pos-backend/internal/domain/webuser"
@@ -25,11 +24,10 @@ type SessionUsecase interface {
 }
 
 type Usecase struct {
-	sessionCache   sessiondomain.SessionCache
-	configRepo     configRepo
-	webuserrepo    webUserRepo
-	permissionRepo permissionRepo
-	roleRepo       roleRepo
+	sessionCache sessiondomain.SessionCache
+	configRepo   configRepo
+	webuserrepo  webUserRepo
+	roleRepo     roleRepo
 }
 
 type configRepo interface {
@@ -38,33 +36,31 @@ type configRepo interface {
 }
 
 type webUserRepo interface {
-	ReInitCache() error
+	FindAll() ([]*webuserdomain.WebUser, error)
 	Find(id string) *webuserdomain.WebUser
 	FindByUsername(username string) *webuserdomain.WebUser
-}
-
-type permissionRepo interface {
-	ReInitCache() error
-	Find(id string) *permissiondomain.Permission
-	FindByRoleId(roleId string) []*permissiondomain.Permission
+	EditUser(*webuserdomain.WebUser)
+	ChangePassword(userId string, newPassword string)
+	RegisterUser(webUser *webuserdomain.WebUser)
 }
 
 type roleRepo interface {
-	ReInitCache() error
 	Find(id string) *roledomain.Role
 	FindMenu(roleId string) ([]*sessiondomain.Menu, error)
+	FindAll() ([]*roledomain.Role, error)
+	FindActive() ([]*roledomain.RoleActive, error)
+	FindActivePermissionPaths(roleId string) ([]string, error)
 }
 
-func New(configRepo configRepo, webuserrepo webUserRepo, permissionRepo permissionRepo, roleRepo roleRepo) *Usecase {
+func New(configRepo configRepo, webuserrepo webUserRepo, roleRepo roleRepo) *Usecase {
 	sessionCache := sessiondomain.SessionCache{
 		DataMap: make(map[string]*sessiondomain.Session),
 	}
 	uc := &Usecase{
-		sessionCache:   sessionCache,
-		configRepo:     configRepo,
-		webuserrepo:    webuserrepo,
-		permissionRepo: permissionRepo,
-		roleRepo:       roleRepo,
+		sessionCache: sessionCache,
+		configRepo:   configRepo,
+		webuserrepo:  webuserrepo,
+		roleRepo:     roleRepo,
 	}
 
 	go uc.removeExpiredSession()
@@ -106,6 +102,7 @@ func (uc *Usecase) Login(username string, password string) (*sessiondomain.Sessi
 
 	role := uc.roleRepo.Find(webuser.RoleId)
 	menus, err := uc.roleRepo.FindMenu(webuser.RoleId)
+	permissionPaths, err := uc.roleRepo.FindActivePermissionPaths(webuser.RoleId)
 	if err != nil {
 		logrus.Error(err.Error())
 	}
@@ -118,10 +115,12 @@ func (uc *Usecase) Login(username string, password string) (*sessiondomain.Sessi
 		Token:       token,
 		ExpiredTime: expiredTime,
 		UserID:      webuser.ID,
+		RoleID:      webuser.RoleId,
 		UserName:    webuser.Username,
 		Name:        webuser.Name,
 		RoleName:    role.Name,
 		Menu:        menus,
+		Permissions: permissionPaths,
 	}
 
 	uc.sessionCache.Lock()
@@ -141,19 +140,9 @@ func (uc *Usecase) AuthCheck(token string, requestorPath string) (string, int, *
 		return uc.configRepo.GetValue(configdomain.UNAUTHORIZED_URL), 401, nil
 	}
 
-	user := uc.webuserrepo.Find(session.UserID)
-	if user == nil {
-		return uc.configRepo.GetValue(configdomain.UNAUTHORIZED_URL), 401, nil
-	}
-
-	permissions := uc.permissionRepo.FindByRoleId(user.RoleId)
-	if permissions == nil {
-		return uc.configRepo.GetValue(configdomain.FORBIDDEN_URL), 403, nil
-	}
-
 	authorized := false
-	for _, permission := range permissions {
-		paths := strings.Split(permission.Paths, ";")
+	for _, permission := range session.Permissions {
+		paths := strings.Split(permission, ";")
 		for _, path := range paths {
 			if requestorPath == path {
 				authorized = true

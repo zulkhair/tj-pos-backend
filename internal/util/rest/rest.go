@@ -37,6 +37,10 @@ func SendResponseOk(c *gin.Context, msg string, data interface{}) {
 	c.JSON(http.StatusOK, CreateResponseOk(msg, data))
 }
 
+func SendResponseFail(c *gin.Context, msg string) {
+	c.JSON(http.StatusOK, CreateResponse(1, msg, nil))
+}
+
 func RedirectToLogin(c *gin.Context) {
 	c.Redirect(http.StatusMovedPermanently, global.LOGIN_URL)
 }

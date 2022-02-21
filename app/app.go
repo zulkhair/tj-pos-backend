@@ -4,12 +4,13 @@ import (
 	"dromatech/pos-backend/global"
 	configdomain "dromatech/pos-backend/internal/domain/config"
 	pinghandler "dromatech/pos-backend/internal/handler/ping"
+	rolehandler "dromatech/pos-backend/internal/handler/role"
 	sessionhandler "dromatech/pos-backend/internal/handler/session"
 	webuserhandler "dromatech/pos-backend/internal/handler/webuser"
 	configrepo "dromatech/pos-backend/internal/repo/config"
-	permissionrepo "dromatech/pos-backend/internal/repo/permission"
 	rolerepo "dromatech/pos-backend/internal/repo/role"
 	webuserrepo "dromatech/pos-backend/internal/repo/webuser"
+	roleusecase "dromatech/pos-backend/internal/usecase/role"
 	sessionusecase "dromatech/pos-backend/internal/usecase/session"
 	webuserusecase "dromatech/pos-backend/internal/usecase/webuser"
 	"fmt"
@@ -20,6 +21,7 @@ type AppHandler struct {
 	pingHandler    *pinghandler.Handler
 	sessionHandler *sessionhandler.Handler
 	webUserHander  *webuserhandler.Handler
+	roleHandler    *rolehandler.Handler
 }
 
 func StartApp() error {
@@ -37,34 +39,32 @@ func StartApp() error {
 	sessionTimeout, _ := strconv.Atoi(configRepo.GetValue(configdomain.SESSION_TIMEOUT_MINUTE))
 	global.SESSION_TIMEOUT_MINUTE = sessionTimeout
 
-	webuserRepo, err := webuserrepo.New()
+	webuserRepo := webuserrepo.New()
 	if err != nil {
 		return err
 	}
 
-	permissionRepo, err := permissionrepo.New()
-	if err != nil {
-		return err
-	}
-
-	roleRepo, err := rolerepo.New()
+	roleRepo := rolerepo.New()
 	if err != nil {
 		return err
 	}
 
 	// init usecase
-	sessionUsecase := sessionusecase.New(configRepo, webuserRepo, permissionRepo, roleRepo)
+	sessionUsecase := sessionusecase.New(configRepo, webuserRepo, roleRepo)
 	webUserUsecase := webuserusecase.New(webuserRepo)
+	roleUsecase := roleusecase.New(roleRepo)
 
 	// init Handler
 	pingHandler := pinghandler.New()
 	sessionHandler := sessionhandler.New(sessionUsecase)
 	webUserHander := webuserhandler.New(webUserUsecase)
+	rolehandler := rolehandler.New(roleUsecase)
 
 	appHandler := AppHandler{
 		pingHandler:    pingHandler,
 		sessionHandler: sessionHandler,
 		webUserHander:  webUserHander,
+		roleHandler:    rolehandler,
 	}
 
 	router := newRoutes(appHandler)

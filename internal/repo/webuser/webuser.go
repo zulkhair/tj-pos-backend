@@ -4,38 +4,35 @@ import (
 	"database/sql"
 	"dromatech/pos-backend/global"
 	webuserdomain "dromatech/pos-backend/internal/domain/webuser"
-
 	"github.com/sirupsen/logrus"
 )
 
 type WebUserRepo interface {
-	ReInitCache() error
+	FindAll() ([]*webuserdomain.WebUser, error)
 	Find(id string) *webuserdomain.WebUser
 	FindByUsername(username string) *webuserdomain.WebUser
 	EditUser(*webuserdomain.WebUser)
 	ChangePassword(userId string, newPassword string)
+	RegisterUser(webUser *webuserdomain.WebUser)
 }
 
 type Repo struct {
-	WebUserCahce webuserdomain.WebUserCache
 }
 
-func New() (*Repo, error) {
+func New() *Repo {
 	repo := &Repo{}
-	err := repo.ReInitCache()
-	return repo, err
+	return repo
 }
 
-func (r *Repo) ReInitCache() error {
-	r.WebUserCahce.Lock()
-	r.WebUserCahce.DataMap = make(map[string]*webuserdomain.WebUser)
-
+func (r *Repo) FindAll() ([]*webuserdomain.WebUser, error) {
 	rows, err := global.DBCON.Raw("SELECT id, name, username, password_hash, password_salt, email, role_id, active, registration_timestamp, created_by FROM web_user").Rows()
 	if err != nil {
 		logrus.Error(err.Error())
-		return err
+		return nil, err
 	}
 	defer rows.Close()
+
+	var users []*webuserdomain.WebUser
 
 	for rows.Next() {
 		var ID sql.NullString
@@ -92,23 +89,14 @@ func (r *Repo) ReInitCache() error {
 			user.CreatedBy = CreatedBy.String
 		}
 
-		r.WebUserCahce.DataMap[user.ID] = user
+		users = append(users, user)
 	}
 
-	r.WebUserCahce.Unlock()
-
-	return nil
+	return users, nil
 }
 
 func (r *Repo) Find(id string) *webuserdomain.WebUser {
-	if webuser, ok := r.WebUserCahce.DataMap[id]; ok {
-		return webuser
-	}
-	return nil
-}
-
-func (r *Repo) FindByUsername(username string) *webuserdomain.WebUser {
-	row := global.DBCON.Raw("SELECT id, name, username, password_hash, password_salt, email, role_id, active, registration_timestamp, created_by FROM web_user WHERE username = ?", username).Row()
+	row := global.DBCON.Raw("SELECT id, name, username, password_hash, password_salt, email, role_id, active, registration_timestamp, created_by FROM web_user WHERE id = ?", id).Row()
 
 	var ID sql.NullString
 	var Name sql.NullString
@@ -167,6 +155,68 @@ func (r *Repo) FindByUsername(username string) *webuserdomain.WebUser {
 	return user
 }
 
+func (r *Repo) FindByUsername(username string) *webuserdomain.WebUser {
+	row := global.DBCON.Raw("SELECT id, name, username, password_hash, password_salt, email, role_id, active, registration_timestamp, created_by FROM web_user WHERE username = ?", username).Row()
+
+	var ID sql.NullString
+	var Name sql.NullString
+	var Username sql.NullString
+	var PasswordHash sql.NullString
+	var PasswordSalt sql.NullString
+	var Email sql.NullString
+	var RoleId sql.NullString
+	var Active sql.NullBool
+	var RegistrationTimestamp sql.NullTime
+	var CreatedBy sql.NullString
+
+	row.Scan(&ID, &Name, &Username, &PasswordHash, &PasswordSalt, &Email, &RoleId, &Active, &RegistrationTimestamp, &CreatedBy)
+
+	user := &webuserdomain.WebUser{}
+	if ID.Valid && ID.String != "" {
+		user.ID = ID.String
+	} else {
+		return nil
+	}
+
+	if Name.Valid {
+		user.Name = Name.String
+	}
+
+	if Username.Valid {
+		user.Username = Username.String
+	}
+
+	if PasswordHash.Valid {
+		user.PasswordHash = PasswordHash.String
+	}
+
+	if PasswordSalt.Valid {
+		user.PasswordSalt = PasswordSalt.String
+	}
+
+	if Email.Valid {
+		user.Email = Email.String
+	}
+
+	if RoleId.Valid {
+		user.RoleId = RoleId.String
+	}
+
+	if Active.Valid {
+		user.Active = Active.Bool
+	}
+
+	if RegistrationTimestamp.Valid {
+		user.RegistrationTimestamp = RegistrationTimestamp.Time
+	}
+
+	if CreatedBy.Valid {
+		user.CreatedBy = CreatedBy.String
+	}
+
+	return user
+}
+
 func (r *Repo) EditUser(webUser *webuserdomain.WebUser) {
 	global.DBCON.Exec("UPDATE public.web_user "+
 		"SET name=? "+
@@ -177,4 +227,10 @@ func (r *Repo) ChangePassword(userId string, newPassword string) {
 	global.DBCON.Exec("UPDATE public.web_user "+
 		"SET password_hash=? "+
 		"WHERE id=?;", newPassword, userId)
+}
+
+func (r *Repo) RegisterUser(webUser *webuserdomain.WebUser) {
+	global.DBCON.Exec("INSERT INTO public.web_user(id, username, password_hash, password_salt, email, role_id, active, registration_timestamp, created_by, name) "+
+		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		webUser.ID, webUser.Username, webUser.PasswordHash, webUser.PasswordSalt, webUser.Email, webUser.RoleId, webUser.Active, webUser.RegistrationTimestamp, webUser.CreatedBy, webUser.Name)
 }

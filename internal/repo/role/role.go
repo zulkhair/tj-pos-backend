@@ -9,32 +9,54 @@ import (
 )
 
 type RoleRepo interface {
-	ReInitCache() error
 	Find(id string) *roledomain.Role
-	FindMenu(roleId string) ([]sessiondomain.Menu, error)
+	FindMenu(roleId string) ([]*sessiondomain.Menu, error)
+	FindAll() ([]*roledomain.Role, error)
+	FindActive() ([]*roledomain.RoleActive, error)
+	FindActivePermissionPaths(roleId string) ([]string, error)
 }
 
 type Repo struct {
-	roleCache roledomain.RoleCache
 }
 
-func New() (*Repo, error) {
+func New() *Repo {
 	repo := &Repo{}
-	err := repo.ReInitCache()
-	return repo, err
+	return repo
 }
 
-func (r *Repo) ReInitCache() error {
-	r.roleCache.Lock()
-	r.roleCache.DataMap = make(map[string]*roledomain.Role)
+func (r *Repo) Find(id string) *roledomain.Role {
+	row := global.DBCON.Raw("SELECT id, name, active FROM role WHERE id = ? AND active = true", id).Row()
+	var ID sql.NullString
+	var Name sql.NullString
+	var Active sql.NullBool
 
+	row.Scan(&ID, &Name, &Active)
+
+	role := &roledomain.Role{}
+	if ID.Valid {
+		role.ID = ID.String
+	}
+
+	if Name.Valid {
+		role.Name = Name.String
+	}
+
+	if Active.Valid {
+		role.Active = Active.Bool
+	}
+
+	return role
+}
+
+func (r *Repo) FindAll() ([]*roledomain.Role, error) {
 	rows, err := global.DBCON.Raw("SELECT id, name, active FROM role").Rows()
 	if err != nil {
 		logrus.Error(err.Error())
-		return err
+		return nil, err
 	}
 	defer rows.Close()
 
+	var roles []*roledomain.Role
 	for rows.Next() {
 		var ID sql.NullString
 		var Name sql.NullString
@@ -55,19 +77,40 @@ func (r *Repo) ReInitCache() error {
 			role.Active = Active.Bool
 		}
 
-		r.roleCache.DataMap[role.ID] = role
+		roles = append(roles, role)
 	}
 
-	r.roleCache.Unlock()
-
-	return nil
+	return roles, nil
 }
 
-func (r *Repo) Find(id string) *roledomain.Role {
-	if role, ok := r.roleCache.DataMap[id]; ok {
-		return role
+func (r *Repo) FindActive() ([]*roledomain.RoleActive, error) {
+	rows, err := global.DBCON.Raw("SELECT id, name FROM role WHERE active = true").Rows()
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, err
 	}
-	return nil
+	defer rows.Close()
+
+	var roles []*roledomain.RoleActive
+	for rows.Next() {
+		var ID sql.NullString
+		var Name sql.NullString
+
+		rows.Scan(&ID, &Name)
+
+		role := &roledomain.RoleActive{}
+		if ID.Valid {
+			role.ID = ID.String
+		}
+
+		if Name.Valid {
+			role.Name = Name.String
+		}
+
+		roles = append(roles, role)
+	}
+
+	return roles, nil
 }
 
 func (r *Repo) FindMenu(roleId string) ([]*sessiondomain.Menu, error) {
@@ -118,4 +161,29 @@ func (r *Repo) FindMenu(roleId string) ([]*sessiondomain.Menu, error) {
 	}
 
 	return menus, nil
+}
+
+func (r *Repo) FindActivePermissionPaths(roleId string) ([]string, error) {
+	rows, err := global.DBCON.Raw("SELECT p.paths FROM permission p "+
+		"JOIN role_permission rp ON (p.id = rp.permission_id) "+
+		"JOIN role r ON (rp.role_id = r.id) "+
+		"WHERE r.id = ? AND r.active = true", roleId).Rows()
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var paths []string
+	for rows.Next() {
+		var path sql.NullString
+
+		rows.Scan(&path)
+
+		if path.Valid {
+			paths = append(paths, path.String)
+		}
+	}
+
+	return paths, nil
 }

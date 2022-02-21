@@ -50,14 +50,14 @@ func (h *Handler) AuthCheck(c *gin.Context) {
 		c.Next()
 		return
 	}
-	
-	url, status, session := h.sessionUc.AuthCheck(token, path)
+
+	_, status, session := h.sessionUc.AuthCheck(token, path)
 	if status == 200 {
 		restutil.SetSession(c, session)
 		c.Next()
 		return
 	} else {
-		c.Redirect(status, url)
+		c.AbortWithStatus(status)
 	}
 }
 

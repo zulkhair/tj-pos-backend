@@ -13,7 +13,7 @@ VALUES ('web:webuser', 'User', '0', '/webuser/', 'fa fa-users'),
 
 INSERT INTO permission(id, menu_id, name, permission_order, outcome, paths, icon)
 VALUES ('web:webuser:createUser', 'web:webuser', 'Registrasi', 0, '/webuser/register-webuser.html',
-        '', 'fas fa-plus'),
+        '/api/role/active-list;/api/user/register-user', 'fas fa-plus'),
        ('web:webuser:editUser', 'web:webuser', 'Ubah Data', 1, '/webuser/edit-webuser.html',
         '', 'fas fa-pen'),
        ('web:webuser:viewUser', 'web:webuser', 'Lihat Data', 2, '/webuser/view-webuser.html',
