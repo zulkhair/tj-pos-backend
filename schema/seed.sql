@@ -5,19 +5,17 @@
 --------------- MENU ----------------
 
 INSERT INTO menu(id, name, menu_order, menu_path, icon)
-VALUES ('web:webuser', 'User', '0', '/webuser/', 'fa fa-users'),
+VALUES ('web:user', 'User', '0', '/user/', 'fa fa-users'),
        ('web:role', 'Role', '1', '/role/', 'fa fa-sitemap')
 ;
 
 ------------ PERMISSION -------------
 
 INSERT INTO permission(id, menu_id, name, permission_order, outcome, paths, icon)
-VALUES ('web:webuser:createUser', 'web:webuser', 'Registrasi', 0, '/webuser/register-webuser.html',
+VALUES ('web:user:createUser', 'web:user', 'Registrasi', 0, '/user/register-user.html',
         '/api/role/active-list;/api/user/register-user', 'fas fa-plus'),
-       ('web:webuser:editUser', 'web:webuser', 'Ubah Data', 1, '/webuser/edit-webuser.html',
-        '', 'fas fa-pen'),
-       ('web:webuser:viewUser', 'web:webuser', 'Lihat Data', 2, '/webuser/view-webuser.html',
-        '', 'fas fa-eye'),
+       ('web:user:editUser', 'web:user', 'Ubah Data', 1, '/user/edit-user.html',
+        '/api/role/active-list;/api/user/find-all;/api/user/force-change-password;/api/user/change-status', 'fas fa-pen'),
        ('web:role:createRole', 'web:role', 'Tambah Data', 0, '/role/create-role.html',
         '', 'fas fa-plus'),
        ('web:role:editRole', 'web:role', 'Ubah Data', 1, '/role/edit-role.html',
@@ -35,9 +33,9 @@ VALUES ('735c7b8b96a8463c8493037d4c8ff085', true, 'Super Admin')
 ----------- MENU_PERMISSION ----------
 
 INSERT INTO menu_permission (menu_id, permission_id)
-VALUES ('web:webuser', 'web:webuser:createUser'),
-       ('web:webuser', 'web:webuser:editUser'),
-       ('web:webuser', 'web:webuser:viewUser'),
+VALUES ('web:user', 'web:user:createUser'),
+       ('web:user', 'web:user:editUser'),
+       ('web:user', 'web:user:viewUser'),
        ('web:role', 'web:role:createRole'),
        ('web:role', 'web:role:editRole'),
        ('web:role', 'web:role:viewRole')
@@ -46,9 +44,9 @@ VALUES ('web:webuser', 'web:webuser:createUser'),
 ----------- ROLE_PERMISSION ----------
 
 INSERT INTO role_permission(role_id, permission_id)
-VALUES ('735c7b8b96a8463c8493037d4c8ff085', 'web:webuser:createUser'),
-       ('735c7b8b96a8463c8493037d4c8ff085', 'web:webuser:editUser'),
-       ('735c7b8b96a8463c8493037d4c8ff085', 'web:webuser:viewUser'),
+VALUES ('735c7b8b96a8463c8493037d4c8ff085', 'web:user:createUser'),
+       ('735c7b8b96a8463c8493037d4c8ff085', 'web:user:editUser'),
+       ('735c7b8b96a8463c8493037d4c8ff085', 'web:user:viewUser'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:role:createRole'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:role:editRole'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:role:viewRole')

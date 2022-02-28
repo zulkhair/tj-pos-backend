@@ -6,7 +6,7 @@ import (
 )
 
 type RoleUsecase interface {
-	GetActiveRole() ([]*roledomain.RoleActive, error)
+	GetActiveRole() ([]*roledomain.RoleResponseModel, error)
 }
 
 type Usecase struct {
@@ -17,7 +17,7 @@ type roleRepo interface {
 	Find(id string) *roledomain.Role
 	FindMenu(roleId string) ([]*sessiondomain.Menu, error)
 	FindAll() ([]*roledomain.Role, error)
-	FindActive() ([]*roledomain.RoleActive, error)
+	FindActive() ([]*roledomain.RoleResponseModel, error)
 	FindActivePermissionPaths(roleId string) ([]string, error)
 }
 
@@ -29,6 +29,6 @@ func New(rolerepo roleRepo) *Usecase {
 	return uc
 }
 
-func (uc *Usecase) GetActiveRole() ([]*roledomain.RoleActive, error) {
+func (uc *Usecase) GetActiveRole() ([]*roledomain.RoleResponseModel, error) {
 	return uc.rolerepo.FindActive()
 }

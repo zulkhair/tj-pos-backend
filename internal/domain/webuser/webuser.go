@@ -9,13 +9,13 @@ type WebUser struct {
 	ID                    string    `json:"id"`
 	Name                  string    `json:"name"`
 	Username              string    `json:"username"`
-	PasswordHash          string    `json:"PasswordHash"`
-	PasswordSalt          string    `json:"passwordSalt"`
-	Email                 string    `json:"email"`
+	PasswordHash          string    `json:"_"`
+	PasswordSalt          string    `json:"_"`
+	Email                 string    `json:"_"`
 	RoleId                string    `json:"roleId"`
 	Active                bool      `json:"active"`
-	RegistrationTimestamp time.Time `json:"registrationTimestamp"`
-	CreatedBy             string    `json:"createdBy"`
+	RegistrationTimestamp time.Time `json:"_"`
+	CreatedBy             string    `json:"_"`
 }
 
 type WebUserCache struct {

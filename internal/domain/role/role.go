@@ -10,7 +10,7 @@ type Role struct {
 	Active bool   `json:"active"`
 }
 
-type RoleActive struct {
+type RoleResponseModel struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }

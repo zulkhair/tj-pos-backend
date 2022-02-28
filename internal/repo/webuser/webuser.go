@@ -14,6 +14,7 @@ type WebUserRepo interface {
 	EditUser(*webuserdomain.WebUser)
 	ChangePassword(userId string, newPassword string)
 	RegisterUser(webUser *webuserdomain.WebUser)
+	ChangeStatus(userId string, active bool)
 }
 
 type Repo struct {
@@ -233,4 +234,10 @@ func (r *Repo) RegisterUser(webUser *webuserdomain.WebUser) {
 	global.DBCON.Exec("INSERT INTO public.web_user(id, username, password_hash, password_salt, email, role_id, active, registration_timestamp, created_by, name) "+
 		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		webUser.ID, webUser.Username, webUser.PasswordHash, webUser.PasswordSalt, webUser.Email, webUser.RoleId, webUser.Active, webUser.RegistrationTimestamp, webUser.CreatedBy, webUser.Name)
+}
+
+func (r *Repo) ChangeStatus(userId string, active bool) {
+	global.DBCON.Exec("UPDATE public.web_user "+
+		"SET active=? "+
+		"WHERE id=?;", active, userId)
 }

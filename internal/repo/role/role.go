@@ -12,7 +12,7 @@ type RoleRepo interface {
 	Find(id string) *roledomain.Role
 	FindMenu(roleId string) ([]*sessiondomain.Menu, error)
 	FindAll() ([]*roledomain.Role, error)
-	FindActive() ([]*roledomain.RoleActive, error)
+	FindActive() ([]*roledomain.RoleResponseModel, error)
 	FindActivePermissionPaths(roleId string) ([]string, error)
 }
 
@@ -83,7 +83,7 @@ func (r *Repo) FindAll() ([]*roledomain.Role, error) {
 	return roles, nil
 }
 
-func (r *Repo) FindActive() ([]*roledomain.RoleActive, error) {
+func (r *Repo) FindActive() ([]*roledomain.RoleResponseModel, error) {
 	rows, err := global.DBCON.Raw("SELECT id, name FROM role WHERE active = true").Rows()
 	if err != nil {
 		logrus.Error(err.Error())
@@ -91,14 +91,14 @@ func (r *Repo) FindActive() ([]*roledomain.RoleActive, error) {
 	}
 	defer rows.Close()
 
-	var roles []*roledomain.RoleActive
+	var roles []*roledomain.RoleResponseModel
 	for rows.Next() {
 		var ID sql.NullString
 		var Name sql.NullString
 
 		rows.Scan(&ID, &Name)
 
-		role := &roledomain.RoleActive{}
+		role := &roledomain.RoleResponseModel{}
 		if ID.Valid {
 			role.ID = ID.String
 		}

@@ -1,9 +1,11 @@
 package webuserhandler
 
 import (
+	webuserdomain "dromatech/pos-backend/internal/domain/webuser"
 	restutil "dromatech/pos-backend/internal/util/rest"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/http"
@@ -13,6 +15,9 @@ type webuserUsecase interface {
 	EditUser(userId, name string)
 	ChangePassword(userId, password1, password2 string) error
 	RegisterUser(creatorId, name, username, password, roleId string) error
+	FindAllUser() ([]*webuserdomain.WebUser, error)
+	ForceChangePassword(userId, password string) error
+	ChangeStatus(userId string, status bool)
 }
 
 // Handler defines the handler
@@ -113,4 +118,71 @@ func (h *Handler) RegisterUser(c *gin.Context) {
 		return
 	}
 	restutil.SendResponseOk(c, "Pengguna baru berhasil ditambahkan", nil)
+}
+
+func (h *Handler) FindAllUser(c *gin.Context) {
+	users, err := h.webuserUsecase.FindAllUser()
+	if err != nil {
+		logrus.Error(err.Error())
+	}
+	restutil.SendResponseOk(c, "", users)
+}
+
+func (h *Handler) ForceChangePassword(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+	}
+
+	userId := gjson.Get(string(jsonData), "userId")
+	if !userId.Exists() || userId.String() == "" {
+		c.JSON(http.StatusOK, restutil.CreateResponse(1, "Harap pilih user yang akan diedit", nil))
+		return
+	}
+
+	password1 := gjson.Get(string(jsonData), "password1")
+	password2 := gjson.Get(string(jsonData), "password2")
+	if !password1.Exists() || password1.String() == "" {
+		restutil.SendResponseFail(c, "Harap isi kata sandi baru")
+		return
+	}
+	if !password2.Exists() || password2.String() == "" {
+		restutil.SendResponseFail(c, "Harap isi ulangi kata sandi baru")
+		return
+	}
+	if password2.String() != password1.String() {
+		restutil.SendResponseFail(c, "Ulangi kata sandi baru harus sesuai")
+		return
+	}
+
+	//session := restutil.GetSession(c)
+	err = h.webuserUsecase.ForceChangePassword(userId.String(), password1.String())
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+	restutil.SendResponseOk(c, "Kata sandi berhasil diubah", nil)
+}
+
+func (h *Handler) ChangeStatus(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+	}
+
+	userId := gjson.Get(string(jsonData), "userId")
+	if !userId.Exists() || userId.String() == "" {
+		c.JSON(http.StatusOK, restutil.CreateResponse(1, "Harap pilih user yang akan diedit", nil))
+		return
+	}
+
+	active := gjson.Get(string(jsonData), "active")
+	if !active.Exists() {
+		c.JSON(http.StatusOK, restutil.CreateResponse(1, "Harap isi status", nil))
+		return
+	}
+
+	//session := restutil.GetSession(c)
+	h.webuserUsecase.ChangeStatus(userId.String(), active.Bool())
+	restutil.SendResponseOk(c, "Status berhasil diubah", nil)
 }

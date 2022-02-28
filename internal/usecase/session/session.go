@@ -48,7 +48,7 @@ type roleRepo interface {
 	Find(id string) *roledomain.Role
 	FindMenu(roleId string) ([]*sessiondomain.Menu, error)
 	FindAll() ([]*roledomain.Role, error)
-	FindActive() ([]*roledomain.RoleActive, error)
+	FindActive() ([]*roledomain.RoleResponseModel, error)
 	FindActivePermissionPaths(roleId string) ([]string, error)
 }
 
@@ -90,6 +90,10 @@ func (uc *Usecase) Login(username string, password string) (*sessiondomain.Sessi
 	webuser := uc.webuserrepo.FindByUsername(username)
 	if webuser == nil {
 		return nil, fmt.Errorf("User atau Password yang dimasukan salah")
+	}
+
+	if !webuser.Active {
+		return nil, fmt.Errorf("User sudah tidak aktif")
 	}
 
 	hasher := sha256.New()

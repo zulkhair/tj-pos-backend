@@ -7,7 +7,7 @@ import (
 )
 
 type roleUsecase interface {
-	GetActiveRole() ([]*roledomain.RoleActive, error)
+	GetActiveRole() ([]*roledomain.RoleResponseModel, error)
 }
 
 // Handler defines the handler
