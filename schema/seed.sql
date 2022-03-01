@@ -33,10 +33,8 @@ VALUES ('735c7b8b96a8463c8493037d4c8ff085', true, 'Super Admin')
 INSERT INTO menu_permission (menu_id, permission_id)
 VALUES ('web:user', 'web:user:createUser'),
        ('web:user', 'web:user:editUser'),
-       ('web:user', 'web:user:viewUser'),
        ('web:role', 'web:role:createRole'),
-       ('web:role', 'web:role:editRole'),
-       ('web:role', 'web:role:viewRole')
+       ('web:role', 'web:role:editRole')
 ;
 
 ----------- ROLE_PERMISSION ----------
@@ -44,10 +42,8 @@ VALUES ('web:user', 'web:user:createUser'),
 INSERT INTO role_permission(role_id, permission_id)
 VALUES ('735c7b8b96a8463c8493037d4c8ff085', 'web:user:createUser'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:user:editUser'),
-       ('735c7b8b96a8463c8493037d4c8ff085', 'web:user:viewUser'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:role:createRole'),
-       ('735c7b8b96a8463c8493037d4c8ff085', 'web:role:editRole'),
-       ('735c7b8b96a8463c8493037d4c8ff085', 'web:role:viewRole')
+       ('735c7b8b96a8463c8493037d4c8ff085', 'web:role:editRole')
 ;
 
 ----------------- USER ---------------

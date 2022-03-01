@@ -1,3 +1,9 @@
+CREATE TABLE public.role
+(
+    id     VARCHAR(32) PRIMARY KEY,
+    active boolean     NOT NULL DEFAULT true,
+    name   VARCHAR(32) NOT NULL
+);
 CREATE TABLE public.web_user
 (
     id                     VARCHAR(32) PRIMARY KEY,
@@ -31,12 +37,6 @@ CREATE TABLE public.permission
     paths            VARCHAR(256) NOT NULL,
     icon             VARCHAR(32),
     FOREIGN KEY (menu_id) REFERENCES public.menu (id)
-);
-CREATE TABLE public.role
-(
-    id     VARCHAR(32) PRIMARY KEY,
-    active boolean     NOT NULL DEFAULT true,
-    name   VARCHAR(32) NOT NULL
 );
 CREATE TABLE public.menu_permission
 (

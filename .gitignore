@@ -1,3 +1,4 @@
 /pos-backend.log
 /.idea/
 *.exe
+/build_linux
