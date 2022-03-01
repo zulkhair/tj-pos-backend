@@ -5,7 +5,9 @@ import (
 	"dromatech/pos-backend/global"
 	roledomain "dromatech/pos-backend/internal/domain/role"
 	sessiondomain "dromatech/pos-backend/internal/domain/session"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 type RoleRepo interface {
@@ -14,6 +16,11 @@ type RoleRepo interface {
 	FindAll() ([]*roledomain.Role, error)
 	FindActive() ([]*roledomain.RoleResponseModel, error)
 	FindActivePermissionPaths(roleId string) ([]string, error)
+	FindPermissions() ([]*roledomain.Permission, error)
+	FindPermissionsByRoleId(roleId string) ([]*roledomain.Permission, error)
+	RegisterRole(name string, permissions []string)
+	FindByName(name string) *roledomain.Role
+	EditRole(roleId string, name string, active bool, permissions []string)
 }
 
 type Repo struct {
@@ -35,6 +42,32 @@ func (r *Repo) Find(id string) *roledomain.Role {
 	role := &roledomain.Role{}
 	if ID.Valid {
 		role.ID = ID.String
+	}
+
+	if Name.Valid {
+		role.Name = Name.String
+	}
+
+	if Active.Valid {
+		role.Active = Active.Bool
+	}
+
+	return role
+}
+
+func (r *Repo) FindByName(name string) *roledomain.Role {
+	row := global.DBCON.Raw("SELECT id, name, active FROM role WHERE LOWER(name) = ? AND active = true", strings.ToLower(name)).Row()
+	var ID sql.NullString
+	var Name sql.NullString
+	var Active sql.NullBool
+
+	row.Scan(&ID, &Name, &Active)
+
+	role := &roledomain.Role{}
+	if ID.Valid && ID.String != "" {
+		role.ID = ID.String
+	} else {
+		return nil
 	}
 
 	if Name.Valid {
@@ -186,4 +219,110 @@ func (r *Repo) FindActivePermissionPaths(roleId string) ([]string, error) {
 	}
 
 	return paths, nil
+}
+
+func (r *Repo) FindPermissions() ([]*roledomain.Permission, error) {
+	rows, err := global.DBCON.Raw("SELECT p.id, m.name, p.name FROM permission p " +
+		"JOIN menu_permission mp ON (mp.permission_id = p.id) " +
+		"JOIN menu m ON (mp.menu_id = m.id) " +
+		"ORDER BY m.menu_order, p.permission_order").Rows()
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var permissions []*roledomain.Permission
+	for rows.Next() {
+		permission := &roledomain.Permission{}
+		rows.Scan(&permission.ID, &permission.Menu, &permission.Name)
+
+		permissions = append(permissions, permission)
+	}
+
+	return permissions, nil
+}
+
+func (r *Repo) FindPermissionsByRoleId(roleId string) ([]*roledomain.Permission, error) {
+	rows, err := global.DBCON.Raw("SELECT p.id, m.name, p.name FROM permission p "+
+		"JOIN menu_permission mp ON (mp.permission_id = p.id) "+
+		"JOIN menu m ON (mp.menu_id = m.id) "+
+		"JOIN role_permission rp ON (rp.permission_id = p.id) "+
+		"WHERE rp.role_id = ?"+
+		"ORDER BY m.menu_order, p.permission_order", roleId).Rows()
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var permissions []*roledomain.Permission
+	for rows.Next() {
+		permission := &roledomain.Permission{}
+		rows.Scan(&permission.ID, &permission.Menu, &permission.Name)
+
+		permissions = append(permissions, permission)
+	}
+
+	return permissions, nil
+}
+
+func (r *Repo) RegisterRole(name string, permissions []string) {
+	tx := global.DBCON.Begin()
+	roleId := strings.ReplaceAll(uuid.NewString(), "-", "")
+	tx.Exec("INSERT INTO public.role(id, active, name) VALUES (?, ?, ?);",
+		roleId, true, name)
+
+	if tx.Error != nil {
+		tx.Rollback()
+		return
+	}
+
+	for _, id := range permissions {
+		tx.Exec("INSERT INTO public.role_permission(role_id, permission_id) VALUES (?, ?);",
+			roleId, id)
+
+		if tx.Error != nil {
+			tx.Rollback()
+			return
+		}
+	}
+
+	if tx.Error != nil {
+		tx.Rollback()
+	}
+	tx.Commit()
+}
+
+func (r *Repo) EditRole(roleId string, name string, active bool, permissions []string) {
+	tx := global.DBCON.Begin()
+	tx.Exec("DELETE FROM public.role_permission WHERE role_id = ?;", roleId)
+
+	if tx.Error != nil {
+		tx.Rollback()
+		logrus.Error(tx.Error.Error())
+		return
+	}
+
+	for _, id := range permissions {
+		tx.Exec("INSERT INTO public.role_permission(role_id, permission_id) VALUES (?, ?);",
+			roleId, id)
+
+		if tx.Error != nil {
+			tx.Rollback()
+			logrus.Error(tx.Error.Error())
+			return
+		}
+	}
+
+	tx.Exec("UPDATE public.role SET active=?, name=? WHERE id=?;",
+		active, name, roleId)
+
+	if tx.Error != nil {
+		tx.Rollback()
+		logrus.Error(tx.Error.Error())
+		return
+	}
+
+	tx.Commit()
 }

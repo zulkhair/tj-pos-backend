@@ -5,9 +5,10 @@ import (
 )
 
 type Role struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Active bool   `json:"active"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Active      bool     `json:"active"`
+	Permissions []string `json:"permissions"`
 }
 
 type RoleResponseModel struct {
@@ -18,4 +19,10 @@ type RoleResponseModel struct {
 type RoleCache struct {
 	sync.RWMutex
 	DataMap map[string]*Role
+}
+
+type Permission struct {
+	ID   string `json:"id"`
+	Menu string `json:"menu"`
+	Name string `json:"name"`
 }

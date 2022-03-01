@@ -21,6 +21,10 @@ func newRoutes(appHandler AppHandler) *gin.Engine {
 	router.POST("/api/user/change-status", appHandler.webUserHander.ChangeStatus)
 
 	router.GET("/api/role/active-list", appHandler.roleHandler.GetActive)
+	router.GET("/api/role/find-all", appHandler.roleHandler.GetAll)
+	router.GET("/api/role/permissions", appHandler.roleHandler.FindPermissions)
+	router.POST("/api/role/create", appHandler.roleHandler.RegisterRole)
+	router.POST("/api/role/edit", appHandler.roleHandler.EditRole)
 
 	return router
 }

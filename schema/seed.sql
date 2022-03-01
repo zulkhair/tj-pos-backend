@@ -17,11 +17,9 @@ VALUES ('web:user:createUser', 'web:user', 'Registrasi', 0, '/user/register-user
        ('web:user:editUser', 'web:user', 'Ubah Data', 1, '/user/edit-user.html',
         '/api/role/active-list;/api/user/find-all;/api/user/force-change-password;/api/user/change-status', 'fas fa-pen'),
        ('web:role:createRole', 'web:role', 'Tambah Data', 0, '/role/create-role.html',
-        '', 'fas fa-plus'),
+        '/api/role/permissions;/api/role/create', 'fas fa-plus'),
        ('web:role:editRole', 'web:role', 'Ubah Data', 1, '/role/edit-role.html',
-        '', 'fas fa-pen'),
-       ('web:role:viewRole', 'web:role', 'Lihat Data', 2, '/role/view-role.html',
-        '', 'fas fa-eye')
+        '/api/role/find-all;/api/role/edit', 'fas fa-pen')
 ;
 
 ----------------- ROLE ---------------
