@@ -26,7 +26,7 @@ func New() *Repo {
 }
 
 func (r *Repo) FindAll() ([]*webuserdomain.WebUser, error) {
-	rows, err := global.DBCON.Raw("SELECT id, name, username, password_hash, password_salt, email, role_id, active, registration_timestamp, created_by FROM web_user").Rows()
+	rows, err := global.DBCON.Raw("SELECT id, name, username, password_hash, password_salt, email, role_id, active, registration_timestamp, created_by FROM web_user ORDER BY name").Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err

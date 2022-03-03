@@ -6,16 +6,17 @@ import (
 )
 
 type Menu struct {
-	Name    string    `json:"name"`
-	Icon    string    `json:"icon"`
-	Path    string    `json:"path"`
-	SubMenu []SubMenu `json:"subMenu"`
+	Name    string     `json:"name"`
+	Icon    string     `json:"icon"`
+	Path    string     `json:"path"`
+	SubMenu []*SubMenu `json:"subMenu"`
 }
 
 type SubMenu struct {
-	Name    string `json:"name"`
-	Outcome string `json:"outcome"`
-	Icon    string `json:"icon"`
+	Name        string   `json:"name"`
+	Outcome     string   `json:"outcome"`
+	Icon        string   `json:"icon"`
+	Permissions []string `json:"-"`
 }
 
 type Session struct {

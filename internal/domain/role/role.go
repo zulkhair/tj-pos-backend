@@ -22,7 +22,8 @@ type RoleCache struct {
 }
 
 type Permission struct {
-	ID   string `json:"id"`
-	Menu string `json:"menu"`
-	Name string `json:"name"`
+	ID      string `json:"id"`
+	Menu    string `json:"menu"`
+	SubMenu string `json:"subMenu"`
+	Name    string `json:"name"`
 }

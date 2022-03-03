@@ -61,6 +61,26 @@ func (h *Handler) AuthCheck(c *gin.Context) {
 	}
 }
 
+func (h *Handler) CheckPermission(c *gin.Context) {
+	permission := c.Query("permission")
+	if permission == "" {
+		restutil.SendResponseFail(c, "")
+		return
+	}
+	session := restutil.GetSession(c)
+	for _, menu := range session.Menu {
+		for _, subMenu := range menu.SubMenu {
+			for _, per := range subMenu.Permissions {
+				if per == permission {
+					restutil.SendResponseOk(c, "", nil)
+					return
+				}
+			}
+		}
+	}
+	restutil.SendResponseFail(c, "")
+}
+
 func (h *Handler) Login(c *gin.Context) {
 	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {

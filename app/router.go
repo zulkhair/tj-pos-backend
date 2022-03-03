@@ -12,6 +12,7 @@ func newRoutes(appHandler AppHandler) *gin.Engine {
 	router.POST("/api/auth/login", appHandler.sessionHandler.Login)
 	router.POST("/api/auth/logout", appHandler.sessionHandler.Logout)
 	router.GET("/api/auth/getmenu", appHandler.sessionHandler.GetMenu)
+	router.GET("/api/auth/check", appHandler.sessionHandler.CheckPermission)
 
 	router.POST("/api/user/edit", appHandler.webUserHander.EditUser)
 	router.POST("/api/user/change-password", appHandler.webUserHander.ChangePassword)
@@ -25,6 +26,10 @@ func newRoutes(appHandler AppHandler) *gin.Engine {
 	router.GET("/api/role/permissions", appHandler.roleHandler.FindPermissions)
 	router.POST("/api/role/create", appHandler.roleHandler.RegisterRole)
 	router.POST("/api/role/edit", appHandler.roleHandler.EditRole)
+
+	router.GET("/api/product/find", appHandler.productHandler.Find)
+	router.POST("/api/product/edit", appHandler.productHandler.Edit)
+	router.POST("/api/product/create", appHandler.productHandler.Create)
 
 	return router
 }

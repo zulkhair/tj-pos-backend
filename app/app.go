@@ -4,12 +4,15 @@ import (
 	"dromatech/pos-backend/global"
 	configdomain "dromatech/pos-backend/internal/domain/config"
 	pinghandler "dromatech/pos-backend/internal/handler/ping"
+	producthandler "dromatech/pos-backend/internal/handler/product"
 	rolehandler "dromatech/pos-backend/internal/handler/role"
 	sessionhandler "dromatech/pos-backend/internal/handler/session"
 	webuserhandler "dromatech/pos-backend/internal/handler/webuser"
 	configrepo "dromatech/pos-backend/internal/repo/config"
+	productrepo "dromatech/pos-backend/internal/repo/product"
 	rolerepo "dromatech/pos-backend/internal/repo/role"
 	webuserrepo "dromatech/pos-backend/internal/repo/webuser"
+	productusecase "dromatech/pos-backend/internal/usecase/product"
 	roleusecase "dromatech/pos-backend/internal/usecase/role"
 	sessionusecase "dromatech/pos-backend/internal/usecase/session"
 	webuserusecase "dromatech/pos-backend/internal/usecase/webuser"
@@ -22,6 +25,7 @@ type AppHandler struct {
 	sessionHandler *sessionhandler.Handler
 	webUserHander  *webuserhandler.Handler
 	roleHandler    *rolehandler.Handler
+	productHandler *producthandler.Handler
 }
 
 func StartApp() error {
@@ -40,31 +44,30 @@ func StartApp() error {
 	global.SESSION_TIMEOUT_MINUTE = sessionTimeout
 
 	webuserRepo := webuserrepo.New()
-	if err != nil {
-		return err
-	}
 
 	roleRepo := rolerepo.New()
-	if err != nil {
-		return err
-	}
+
+	productRepo := productrepo.New()
 
 	// init usecase
 	sessionUsecase := sessionusecase.New(configRepo, webuserRepo, roleRepo)
 	webUserUsecase := webuserusecase.New(webuserRepo)
 	roleUsecase := roleusecase.New(roleRepo)
+	productUsecase := productusecase.New(productRepo)
 
 	// init Handler
 	pingHandler := pinghandler.New()
 	sessionHandler := sessionhandler.New(sessionUsecase)
 	webUserHander := webuserhandler.New(webUserUsecase)
 	rolehandler := rolehandler.New(roleUsecase)
+	productHandler := producthandler.New(productUsecase)
 
 	appHandler := AppHandler{
 		pingHandler:    pingHandler,
 		sessionHandler: sessionHandler,
 		webUserHander:  webUserHander,
 		roleHandler:    rolehandler,
+		productHandler: productHandler,
 	}
 
 	router := newRoutes(appHandler)
