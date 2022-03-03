@@ -25,9 +25,9 @@ VALUES ('web:user:createUser', 'web:user:createUser', 'Registrasi', 0, '/api/rol
         '/api/role/active-list;/api/user/find-all;/api/user/force-change-password;/api/user/change-status'),
        ('web:role:createRole', 'web:role:createRole', 'Tambah Data', 0, '/api/role/permissions;/api/role/create'),
        ('web:role:editRole', 'web:role:editRole', 'Ubah Data', 1, '/api/role/find-all;/api/role/edit'),
-       ('web:masterdata:product:add', 'web:masterdata:product', 'Tambah Data Produk', 0, '/api/product/find;/api/product/create'),
-       ('web:masterdata:product:view', 'web:masterdata:product', 'Lihat Data Produk', 1, '/api/product/find'),
-       ('web:masterdata:product:edit', 'web:masterdata:product', 'Perbarui Data Produk', 2, '/api/product/find;/api/product/edit')
+       ('web:masterdata:product:add', 'web:masterdata:product', 'Tambah Data Produk', 0, '/api/product/find;/api/product/create;/api/auth/check'),
+       ('web:masterdata:product:view', 'web:masterdata:product', 'Lihat Data Produk', 1, '/api/product/find;/api/auth/check'),
+       ('web:masterdata:product:edit', 'web:masterdata:product', 'Perbarui Data Produk', 2, '/api/product/find;/api/product/edit;/api/auth/check')
 ;
 
 ----------------- ROLE ---------------
