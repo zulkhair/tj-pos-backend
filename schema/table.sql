@@ -66,4 +66,20 @@ CREATE TABLE public.product
     description VARCHAR(256),
     active      boolean      NOT NULL DEFAULT true
 );
+CREATE TABLE public.supplier
+(
+    id          VARCHAR(32) PRIMARY KEY,
+    code        VARCHAR(32)  NOT NULL,
+    name        VARCHAR(128) NOT NULL,
+    description VARCHAR(256),
+    active      boolean      NOT NULL DEFAULT true
+);
+CREATE TABLE public.customer
+(
+    id          VARCHAR(32) PRIMARY KEY,
+    code        VARCHAR(32)  NOT NULL,
+    name        VARCHAR(128) NOT NULL,
+    description VARCHAR(256),
+    active      boolean      NOT NULL DEFAULT true
+);
 

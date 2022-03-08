@@ -3,18 +3,24 @@ package app
 import (
 	"dromatech/pos-backend/global"
 	configdomain "dromatech/pos-backend/internal/domain/config"
+	customerhandler "dromatech/pos-backend/internal/handler/customer"
 	pinghandler "dromatech/pos-backend/internal/handler/ping"
 	producthandler "dromatech/pos-backend/internal/handler/product"
 	rolehandler "dromatech/pos-backend/internal/handler/role"
 	sessionhandler "dromatech/pos-backend/internal/handler/session"
+	supplierhandler "dromatech/pos-backend/internal/handler/supplier"
 	webuserhandler "dromatech/pos-backend/internal/handler/webuser"
 	configrepo "dromatech/pos-backend/internal/repo/config"
+	customerrepo "dromatech/pos-backend/internal/repo/customer"
 	productrepo "dromatech/pos-backend/internal/repo/product"
 	rolerepo "dromatech/pos-backend/internal/repo/role"
+	supplierrepo "dromatech/pos-backend/internal/repo/supplier"
 	webuserrepo "dromatech/pos-backend/internal/repo/webuser"
+	customerusecase "dromatech/pos-backend/internal/usecase/customer"
 	productusecase "dromatech/pos-backend/internal/usecase/product"
 	roleusecase "dromatech/pos-backend/internal/usecase/role"
 	sessionusecase "dromatech/pos-backend/internal/usecase/session"
+	supplierusecase "dromatech/pos-backend/internal/usecase/supplier"
 	webuserusecase "dromatech/pos-backend/internal/usecase/webuser"
 	"fmt"
 	"strconv"
@@ -26,10 +32,12 @@ type AppHandler struct {
 	webUserHander  *webuserhandler.Handler
 	roleHandler    *rolehandler.Handler
 	productHandler *producthandler.Handler
+	supplierHandler *supplierhandler.Handler
+	customerHandler *customerhandler.Handler
 }
 
 func StartApp() error {
-	// init repo
+	// init config repo
 	configRepo, err := configrepo.New()
 	if err != nil {
 		return err
@@ -43,17 +51,20 @@ func StartApp() error {
 	sessionTimeout, _ := strconv.Atoi(configRepo.GetValue(configdomain.SESSION_TIMEOUT_MINUTE))
 	global.SESSION_TIMEOUT_MINUTE = sessionTimeout
 
+	// init repo
 	webuserRepo := webuserrepo.New()
-
 	roleRepo := rolerepo.New()
-
 	productRepo := productrepo.New()
+	supplierRepo := supplierrepo.New()
+	customerRepo := customerrepo.New()
 
 	// init usecase
 	sessionUsecase := sessionusecase.New(configRepo, webuserRepo, roleRepo)
 	webUserUsecase := webuserusecase.New(webuserRepo)
 	roleUsecase := roleusecase.New(roleRepo)
 	productUsecase := productusecase.New(productRepo)
+	supplierUsecase := supplierusecase.New(supplierRepo)
+	custmerUsecase := customerusecase.New(customerRepo)
 
 	// init Handler
 	pingHandler := pinghandler.New()
@@ -61,6 +72,8 @@ func StartApp() error {
 	webUserHander := webuserhandler.New(webUserUsecase)
 	rolehandler := rolehandler.New(roleUsecase)
 	productHandler := producthandler.New(productUsecase)
+	supplierHandler := supplierhandler.New(supplierUsecase)
+	customerHandler := customerhandler.New(custmerUsecase)
 
 	appHandler := AppHandler{
 		pingHandler:    pingHandler,
@@ -68,6 +81,8 @@ func StartApp() error {
 		webUserHander:  webUserHander,
 		roleHandler:    rolehandler,
 		productHandler: productHandler,
+		supplierHandler: supplierHandler,
+		customerHandler: customerHandler,
 	}
 
 	router := newRoutes(appHandler)
