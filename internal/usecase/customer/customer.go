@@ -47,13 +47,13 @@ func (uc *Usecase) Find(id, code, name string) ([]*customerdomain.Customer, erro
 }
 
 func (uc *Usecase) Create(code, name, description string) error {
-	products, err := uc.customerRepo.Find(map[string]interface{}{"code": code})
+	entities, err := uc.customerRepo.Find(map[string]interface{}{"code": code})
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Ada kesalahan saat melakukan penambahan data customer")
 	}
 
-	if products != nil || len(products) > 0 {
+	if entities != nil || len(entities) > 0 {
 		return fmt.Errorf("Customer dengan kode %s sudah terdaftar", code)
 	}
 
@@ -71,20 +71,20 @@ func (uc *Usecase) Create(code, name, description string) error {
 }
 
 func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
-	products, err := uc.customerRepo.Find(map[string]interface{}{"id": id})
+	entities, err := uc.customerRepo.Find(map[string]interface{}{"id": id})
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Ada kesalahan saat melakukan pembaruan data customer")
 	}
 
-	if len(products) != 1 {
+	if len(entities) != 1 {
 		logrus.Errorf("Product with id %s more than 1", id)
 		return fmt.Errorf("Ada kesalahan saat melakukan pembaruan data customer")
 	}
 
-	product := products[0]
+	entity := entities[0]
 
-	if code != product.Code {
+	if code != entity.Code {
 		products, err := uc.customerRepo.Find(map[string]interface{}{"code": code})
 		if err != nil {
 			logrus.Error(err.Error())
@@ -96,10 +96,10 @@ func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 		}
 	}
 
-	product.Code = code
-	product.Name = name
-	product.Description = description
-	product.Active = active
+	entity.Code = code
+	entity.Name = name
+	entity.Description = description
+	entity.Active = active
 
-	return uc.customerRepo.Edit(product)
+	return uc.customerRepo.Edit(entity)
 }

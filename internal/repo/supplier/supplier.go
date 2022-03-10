@@ -12,6 +12,7 @@ type SupplierRepo interface {
 	Find(params map[string]interface{}) ([]*supplierdomain.Supplier, error)
 	Create(product *supplierdomain.Supplier) error
 	Edit(product *supplierdomain.Supplier) error
+	UpdateBuyPrice(request supplierdomain.BuyPriceRequest) error
 }
 
 type Repo struct {
@@ -94,4 +95,20 @@ func (r *Repo) Edit(entity *supplierdomain.Supplier) error {
 	return global.DBCON.Exec("UPDATE public.supplier "+
 		"SET code=?, name=?, description=?, active=? "+
 		"WHERE id=?;", entity.Code, entity.Name, entity.Description, entity.Active, entity.ID).Error
+}
+
+func (r *Repo) UpdateBuyPrice(request supplierdomain.BuyPriceRequest) error {
+	tx := global.DBCON.Begin()
+
+	for _, detail := range request.Prices {
+		tx.Exec("INSERT INTO public.buy_price(date, supplier_id, unit_id, product_id, price) "+
+			"VALUES (?, ?, ?, ?, ?)", request.Date, request.SupplierId, request.UnitId, detail.ProductID, detail.Price)
+
+		if tx.Error != nil {
+			tx.Rollback()
+			return tx.Error
+		}
+	}
+
+	return tx.Error
 }

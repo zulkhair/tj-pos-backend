@@ -13,6 +13,7 @@ type supplierUsecase interface {
 	Find(id, code, name string) ([]*supplierdomain.Supplier, error)
 	Create(code, name, description string) error
 	Edit(id, code, name, description string, active bool) error
+	UpdateBuyPrice(request supplierdomain.BuyPriceRequest) error
 }
 
 // Handler defines the handler
@@ -107,4 +108,25 @@ func (h *Handler) Edit(c *gin.Context) {
 	}
 
 	restutil.SendResponseOk(c, "supplier berhasil diperbarui", nil)
+}
+
+func (h *Handler) UpdateBuyPrice(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+		restutil.SendResponseFail(c, "Ada kesalahan saat memperbarui harga")
+	}
+	request, ok := gjson.Parse(string(jsonData)).Value().(supplierdomain.BuyPriceRequest)
+	if !ok {
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+		restutil.SendResponseFail(c, "Ada kesalahan saat memperbarui harga")
+	}
+
+	err = h.supplierUsecase.UpdateBuyPrice(request)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "Daftar harga berhasil diperbarui", nil)
 }

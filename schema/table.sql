@@ -21,20 +21,20 @@ CREATE TABLE public.web_user
 );
 CREATE TABLE public.menu
 (
-    id    VARCHAR(32) PRIMARY KEY,
-    name  VARCHAR(32)  NOT NULL,
+    id        VARCHAR(32) PRIMARY KEY,
+    name      VARCHAR(32)  NOT NULL,
     seq_order SMALLINT     NOT NULL,
-    path  VARCHAR(128) NOT NULL,
-    icon  VARCHAR(32)
+    path      VARCHAR(128) NOT NULL,
+    icon      VARCHAR(32)
 );
 CREATE TABLE public.sub_menu
 (
-    id      VARCHAR(32) PRIMARY KEY,
-    menu_id VARCHAR(32)  NOT NULL,
-    name    VARCHAR(32)  NOT NULL,
-    seq_order   SMALLINT     NOT NULL,
-    outcome VARCHAR(128) NOT NULL,
-    icon    VARCHAR(32),
+    id        VARCHAR(32) PRIMARY KEY,
+    menu_id   VARCHAR(32)  NOT NULL,
+    name      VARCHAR(32)  NOT NULL,
+    seq_order SMALLINT     NOT NULL,
+    outcome   VARCHAR(128) NOT NULL,
+    icon      VARCHAR(32),
     FOREIGN KEY (menu_id) REFERENCES public.menu (id)
 );
 CREATE TABLE public.permission
@@ -42,14 +42,14 @@ CREATE TABLE public.permission
     id          VARCHAR(32) PRIMARY KEY,
     sub_menu_id VARCHAR(32)  NOT NULL,
     name        VARCHAR(32)  NOT NULL,
-    seq_order       SMALLINT     NOT NULL,
+    seq_order   SMALLINT     NOT NULL,
     apis        VARCHAR(256) NOT NULL,
     FOREIGN KEY (sub_menu_id) REFERENCES public.sub_menu (id)
 );
 CREATE TABLE public.role_permission
 (
-    role_id       VARCHAR(32) NOT NULL,
-    permission_id VARCHAR(32) NOT NULL,
+    role_id       VARCHAR(32) PRIMARY KEY,
+    permission_id VARCHAR(32) PRIMARY KEY,
     FOREIGN KEY (role_id) REFERENCES public.role (id),
     FOREIGN KEY (permission_id) REFERENCES public.permission (id)
 );
@@ -81,5 +81,27 @@ CREATE TABLE public.customer
     name        VARCHAR(128) NOT NULL,
     description VARCHAR(256),
     active      boolean      NOT NULL DEFAULT true
+);
+CREATE TABLE public.unit
+(
+    id          VARCHAR(32) PRIMARY KEY,
+    code        VARCHAR(32) NOT NULL,
+    description VARCHAR(32)
+);
+CREATE TABLE public.buy_price
+(
+    date        TIMESTAMP WITHOUT TIME ZONE PRIMARY KEY,
+    supplier_id VARCHAR(32) PRIMARY KEY,
+    unit_id     VARCHAR(32) PRIMARY KEY,
+    product_id  VARCHAR(32) PRIMARY KEY,
+    price       NUMERIC     NOT NULL
+);
+CREATE TABLE public.sell_price
+(
+    date        TIMESTAMP WITHOUT TIME ZONE PRIMARY KEY,
+    supplier_id VARCHAR(32) PRIMARY KEY,
+    unit_id     VARCHAR(32) PRIMARY KEY,
+    product_id  VARCHAR(32) PRIMARY KEY,
+    price       NUMERIC     NOT NULL
 );
 
