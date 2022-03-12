@@ -9,9 +9,9 @@ import (
 )
 
 type UnitUsecase interface {
-	Find(id, code string) ([]*unitdomain.Unit, error)
+	Find(id, code string, active *bool) ([]*unitdomain.Unit, error)
 	Create(code, description string) error
-	Edit(id, code, description string) error
+	Edit(id, code, description string, active *bool) error
 }
 
 type Usecase struct {
@@ -32,13 +32,16 @@ func New(unitRepo unitRepo) *Usecase {
 	return uc
 }
 
-func (uc *Usecase) Find(id, code string) ([]*unitdomain.Unit, error) {
+func (uc *Usecase) Find(id, code string, active *bool) ([]*unitdomain.Unit, error) {
 	param := make(map[string]interface{})
 	if id != "" {
 		param["id"] = id
 	}
 	if code != "" {
 		param["code"] = code
+	}
+	if active != nil {
+		param["active"] = active
 	}
 	return uc.unitRepo.Find(param)
 }
@@ -47,7 +50,7 @@ func (uc *Usecase) Create(code, description string) error {
 	entities, err := uc.unitRepo.Find(map[string]interface{}{"code": code})
 	if err != nil {
 		logrus.Error(err.Error())
-		return fmt.Errorf("Ada kesalahan saat melakukan penambahan data satuan")
+		return fmt.Errorf("Terjadi kesalahan saat melakukan penambahan data satuan")
 	}
 
 	if entities != nil || len(entities) > 0 {
@@ -60,12 +63,15 @@ func (uc *Usecase) Create(code, description string) error {
 		ID:          id,
 		Code:        code,
 		Description: description,
+		Active:      true,
 	}
 
-	return uc.unitRepo.Create(product)
+	err = uc.unitRepo.Create(product)
+
+	return nil
 }
 
-func (uc *Usecase) Edit(id, code, description string) error {
+func (uc *Usecase) Edit(id, code, description string, active *bool) error {
 	entities, err := uc.unitRepo.Find(map[string]interface{}{"id": id})
 	if err != nil {
 		logrus.Error(err.Error())
@@ -91,8 +97,21 @@ func (uc *Usecase) Edit(id, code, description string) error {
 		}
 	}
 
-	entity.Code = code
-	entity.Description = description
+	if code != "" {
+		entity.Code = code
+	}
+	if description != "" {
+		entity.Description = description
+	}
+	if active != nil {
+		entity.Active = *active
+	}
 
-	return uc.unitRepo.Edit(entity)
+	err = uc.unitRepo.Edit(entity)
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data satuan")
+	}
+
+	return nil
 }

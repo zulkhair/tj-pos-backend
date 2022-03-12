@@ -7,7 +7,8 @@
 INSERT INTO menu(id, name, seq_order, path, icon)
 VALUES ('web:user', 'User', 0, 'user', 'fas fa-users'),
        ('web:role', 'Role', 1, 'role', 'fas fa-sitemap'),
-       ('web:masterdata', 'Master Data', 2, 'master', 'fas fa-database')
+       ('web:masterdata', 'Master Data', 2, 'master', 'fas fa-database'),
+       ('web:price', 'Harga', 3, 'price', 'fas fa-rupiah-sign')
 ;
 
 INSERT INTO sub_menu(id, menu_id, name, seq_order, outcome, icon)
@@ -17,7 +18,9 @@ VALUES ('web:user:createUser', 'web:user', 'Tambah Data', 0, '/user/register-use
        ('web:role:editRole', 'web:role', 'Ubah Data', 1, '/role/edit-role.html', 'fas fa-pen'),
        ('web:masterdata:product', 'web:masterdata', 'Produk', 0, '/master/product.html', 'fas fa-seedling'),
        ('web:masterdata:supplier', 'web:masterdata', 'Supplier', 1, '/master/supplier.html', 'fas fa-people-carry-box'),
-       ('web:masterdata:customer', 'web:masterdata', 'Customer', 2, '/master/customer.html', 'fas fa-user-tag')
+       ('web:masterdata:customer', 'web:masterdata', 'Customer', 2, '/master/customer.html', 'fas fa-user-tag'),
+       ('web:price:buy', 'web:price', 'Harga Beli', 0, '/price/buy.html', 'fas fa-cart-shopping'),
+       ('web:price:sell', 'web:price', 'Harga Jual', 1, '/price/sell.html', 'fas fa-cash-register')
 ;
 
 ------------ PERMISSION -------------
@@ -35,7 +38,9 @@ VALUES ('web:user:createUser', 'web:user:createUser', 'Registrasi', 0, '/api/rol
        ('web:masterdata:supplier:edit', 'web:masterdata:supplier', 'Perbarui Data Supplier', 2, '/api/supplier/find;/api/supplier/edit;/api/auth/check'),
        ('web:masterdata:customer:add', 'web:masterdata:customer', 'Tambah Data Customer', 0, '/api/customer/find;/api/customer/create;/api/auth/check'),
        ('web:masterdata:customer:view', 'web:masterdata:customer', 'Lihat Data Customer', 1, '/api/customer/find;/api/auth/check'),
-       ('web:masterdata:customer:edit', 'web:masterdata:customer', 'Perbarui Data Customer', 2, '/api/customer/find;/api/customer/edit;/api/auth/check')
+       ('web:masterdata:customer:edit', 'web:masterdata:customer', 'Perbarui Data Customer', 2, '/api/customer/find;/api/customer/edit;/api/auth/check'),
+       ('web:price:buy:manage', 'web:price:buy', 'Kelola Harga Beli', 0, '/api/unit/find;/api/unit/edit;/api/unit/create;/api/supplier/find;/api/product/find;/api/supplier/buy-price'),
+       ('web:price:sell:manage', 'web:price:sell', 'Kelola Harga Jual', 0, '/api/unit/find;/api/unit/edit;/api/unit/create;/api/supplier/find;/api/product/find;/api/customer/sell-price')
 ;
 
 ----------------- ROLE ---------------
@@ -50,6 +55,7 @@ INSERT INTO role_permission(role_id, permission_id)
 VALUES ('735c7b8b96a8463c8493037d4c8ff085', 'web:user:createUser'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:user:editUser'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:role:createRole'),
+       ('735c7b8b96a8463c8493037d4c8ff085', 'web:role:editRole'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:masterdata:product:add'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:masterdata:product:view'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:masterdata:product:edit'),
@@ -58,7 +64,9 @@ VALUES ('735c7b8b96a8463c8493037d4c8ff085', 'web:user:createUser'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:masterdata:supplier:edit'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:masterdata:customer:add'),
        ('735c7b8b96a8463c8493037d4c8ff085', 'web:masterdata:customer:view'),
-       ('735c7b8b96a8463c8493037d4c8ff085', 'web:masterdata:customer:edit')
+       ('735c7b8b96a8463c8493037d4c8ff085', 'web:masterdata:customer:edit'),
+       ('735c7b8b96a8463c8493037d4c8ff085', 'web:price:buy:manage'),
+       ('735c7b8b96a8463c8493037d4c8ff085', 'web:price:sell:manage')
 ;
 
 ----------------- USER ---------------

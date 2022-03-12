@@ -49,8 +49,9 @@ func (r *Repo) Find(params map[string]interface{}) ([]*unitdomain.Unit, error) {
 	for rows.Next() {
 		var ID sql.NullString
 		var Code sql.NullString
+		var Description sql.NullString
 
-		rows.Scan(&ID, &Code)
+		rows.Scan(&ID, &Code, &Description)
 
 		entity := &unitdomain.Unit{}
 		if ID.Valid && ID.String != "" {
@@ -63,6 +64,10 @@ func (r *Repo) Find(params map[string]interface{}) ([]*unitdomain.Unit, error) {
 			entity.Code = Code.String
 		}
 
+		if Description.Valid {
+			entity.Description = Description.String
+		}
+
 		entities = append(entities, entity)
 	}
 
@@ -70,13 +75,13 @@ func (r *Repo) Find(params map[string]interface{}) ([]*unitdomain.Unit, error) {
 }
 
 func (r *Repo) Create(entity *unitdomain.Unit) error {
-	return global.DBCON.Exec("INSERT INTO public.supplier(id, code, description) "+
-		"VALUES (?, ?, ?)",
-		entity.ID, entity.Code, entity.Description).Error
+	return global.DBCON.Exec("INSERT INTO public.unit(id, code, description, active) "+
+		"VALUES (?, ?, ?, ?)",
+		entity.ID, entity.Code, entity.Description, entity.Active).Error
 }
 
 func (r *Repo) Edit(entity *unitdomain.Unit) error {
-	return global.DBCON.Exec("UPDATE public.supplier "+
-		"SET code=?, description=? "+
-		"WHERE id=?;", entity.Code, entity.Description, entity.ID).Error
+	return global.DBCON.Exec("UPDATE public.unit "+
+		"SET code=?, description=?, active=? "+
+		"WHERE id=?;", entity.Code, entity.Description, entity.Active, entity.ID).Error
 }

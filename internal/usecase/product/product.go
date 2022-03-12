@@ -50,7 +50,7 @@ func (uc *Usecase) Create(code, name, description string) error {
 	products, err := uc.productRepo.Find(map[string]interface{}{"code": code})
 	if err != nil {
 		logrus.Error(err.Error())
-		return fmt.Errorf("Ada kesalahan saat melakukan penambahan data produk")
+		return fmt.Errorf("Terjadi kesalahan saat melakukan penambahan data produk")
 	}
 
 	if products != nil || len(products) > 0 {
@@ -67,19 +67,25 @@ func (uc *Usecase) Create(code, name, description string) error {
 		Active:      true,
 	}
 
-	return uc.productRepo.Create(product)
+	err = uc.productRepo.Create(product)
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan penambahan data produk")
+	}
+
+	return nil
 }
 
 func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 	products, err := uc.productRepo.Find(map[string]interface{}{"id": id})
 	if err != nil {
 		logrus.Error(err.Error())
-		return fmt.Errorf("Ada kesalahan saat melakukan pembaruan data produk")
+		return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data produk")
 	}
 
 	if len(products) != 1 {
 		logrus.Errorf("Product with id %s more than 1", id)
-		return fmt.Errorf("Ada kesalahan saat melakukan pembaruan data produk")
+		return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data produk")
 	}
 
 	product := products[0]
@@ -88,7 +94,7 @@ func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 		products, err := uc.productRepo.Find(map[string]interface{}{"code": code})
 		if err != nil {
 			logrus.Error(err.Error())
-			return fmt.Errorf("Ada kesalahan saat melakukan pembaruan data produk")
+			return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data produk")
 		}
 
 		if products != nil || len(products) > 0 {
@@ -101,5 +107,11 @@ func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 	product.Description = description
 	product.Active = active
 
-	return uc.productRepo.Edit(product)
+	err = uc.productRepo.Edit(product)
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data produk")
+	}
+
+	return nil
 }

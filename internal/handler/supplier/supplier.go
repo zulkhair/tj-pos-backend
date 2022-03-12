@@ -3,16 +3,20 @@ package supplierhandler
 import (
 	supplierdomain "dromatech/pos-backend/internal/domain/supplier"
 	restutil "dromatech/pos-backend/internal/util/rest"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
+	"strconv"
 )
 
 type supplierUsecase interface {
-	Find(id, code, name string) ([]*supplierdomain.Supplier, error)
+	Find(id, code, name string, active *bool) ([]*supplierdomain.Supplier, error)
 	Create(code, name, description string) error
 	Edit(id, code, name, description string, active bool) error
+	GetBuyPrice(supplierId, unitId, date string) ([]*supplierdomain.BuyPriceResponse, error)
 	UpdateBuyPrice(request supplierdomain.BuyPriceRequest) error
 }
 
@@ -31,8 +35,20 @@ func (h *Handler) Find(c *gin.Context) {
 	id := c.Query("id")
 	code := c.Query("code")
 	name := c.Query("name")
+	active := c.Query("active")
 
-	products, err := h.supplierUsecase.Find(id, code, name)
+	var activeBool *bool
+	if active != "" {
+		parsedBool, err := strconv.ParseBool(active)
+		if err != nil {
+			logrus.Error(err.Error())
+			activeBool = nil
+		} else {
+			activeBool = &parsedBool
+		}
+	}
+
+	products, err := h.supplierUsecase.Find(id, code, name, activeBool)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 	}
@@ -110,16 +126,34 @@ func (h *Handler) Edit(c *gin.Context) {
 	restutil.SendResponseOk(c, "supplier berhasil diperbarui", nil)
 }
 
+func (h *Handler) GetBuyPrice(c *gin.Context) {
+	supplierId := c.Query("supplierId")
+	unitId := c.Query("unitId")
+	date := c.Query("date")
+
+	response, err := h.supplierUsecase.GetBuyPrice(supplierId, unitId, date)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "", response)
+}
+
 func (h *Handler) UpdateBuyPrice(c *gin.Context) {
 	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		c.AbortWithError(400, fmt.Errorf("bad request"))
+		logrus.Error(err.Error())
 		restutil.SendResponseFail(c, "Ada kesalahan saat memperbarui harga")
+		return
 	}
-	request, ok := gjson.Parse(string(jsonData)).Value().(supplierdomain.BuyPriceRequest)
-	if !ok {
-		c.AbortWithError(400, fmt.Errorf("bad request"))
+
+	request := supplierdomain.BuyPriceRequest{}
+	err = json.Unmarshal(jsonData, &request)
+	if err != nil {
+		logrus.Errorf(err.Error())
 		restutil.SendResponseFail(c, "Ada kesalahan saat memperbarui harga")
+		return
 	}
 
 	err = h.supplierUsecase.UpdateBuyPrice(request)

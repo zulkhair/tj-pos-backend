@@ -50,7 +50,7 @@ func (uc *Usecase) Create(code, name, description string) error {
 	entities, err := uc.customerRepo.Find(map[string]interface{}{"code": code})
 	if err != nil {
 		logrus.Error(err.Error())
-		return fmt.Errorf("Ada kesalahan saat melakukan penambahan data customer")
+		return fmt.Errorf("Terjadi kesalahan saat melakukan penambahan data customer")
 	}
 
 	if entities != nil || len(entities) > 0 {
@@ -59,7 +59,7 @@ func (uc *Usecase) Create(code, name, description string) error {
 
 	id := strings.ReplaceAll(uuid.NewString(), "-", "")
 
-	product := &customerdomain.Customer{
+	entity := &customerdomain.Customer{
 		ID:          id,
 		Code:        code,
 		Name:        name,
@@ -67,19 +67,25 @@ func (uc *Usecase) Create(code, name, description string) error {
 		Active:      true,
 	}
 
-	return uc.customerRepo.Create(product)
+	err = uc.customerRepo.Create(entity)
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan penambahan data customer")
+	}
+
+	return nil
 }
 
 func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 	entities, err := uc.customerRepo.Find(map[string]interface{}{"id": id})
 	if err != nil {
 		logrus.Error(err.Error())
-		return fmt.Errorf("Ada kesalahan saat melakukan pembaruan data customer")
+		return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data customer")
 	}
 
 	if len(entities) != 1 {
 		logrus.Errorf("Product with id %s more than 1", id)
-		return fmt.Errorf("Ada kesalahan saat melakukan pembaruan data customer")
+		return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data customer")
 	}
 
 	entity := entities[0]
@@ -88,7 +94,7 @@ func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 		products, err := uc.customerRepo.Find(map[string]interface{}{"code": code})
 		if err != nil {
 			logrus.Error(err.Error())
-			return fmt.Errorf("Ada kesalahan saat melakukan pembaruan data customer")
+			return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data customer")
 		}
 
 		if products != nil || len(products) > 0 {
@@ -101,5 +107,11 @@ func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 	entity.Description = description
 	entity.Active = active
 
-	return uc.customerRepo.Edit(entity)
+	err = uc.customerRepo.Edit(entity)
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data customer")
+	}
+
+	return nil
 }

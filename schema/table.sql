@@ -84,24 +84,35 @@ CREATE TABLE public.customer
 );
 CREATE TABLE public.unit
 (
-    id          VARCHAR(32) PRIMARY KEY,
+    id          VARCHAR(32),
     code        VARCHAR(32) NOT NULL,
-    description VARCHAR(32)
+    description VARCHAR(32),
+    active      boolean      NOT NULL DEFAULT true,
+    PRIMARY KEY (id)
 );
 CREATE TABLE public.buy_price
 (
-    date        TIMESTAMP WITHOUT TIME ZONE PRIMARY KEY,
-    supplier_id VARCHAR(32) PRIMARY KEY,
-    unit_id     VARCHAR(32) PRIMARY KEY,
-    product_id  VARCHAR(32) PRIMARY KEY,
-    price       NUMERIC     NOT NULL
+    date        TIMESTAMP WITHOUT TIME ZONE,
+    supplier_id VARCHAR(32),
+    unit_id     VARCHAR(32),
+    product_id  VARCHAR(32),
+    price       NUMERIC     NOT NULL,
+    FOREIGN KEY (supplier_id) REFERENCES public.supplier (id),
+    FOREIGN KEY (unit_id) REFERENCES public.unit (id),
+    FOREIGN KEY (product_id) REFERENCES public.product (id),
+    PRIMARY KEY (date, supplier_id, unit_id, product_id)
 );
 CREATE TABLE public.sell_price
 (
-    date        TIMESTAMP WITHOUT TIME ZONE PRIMARY KEY,
-    supplier_id VARCHAR(32) PRIMARY KEY,
-    unit_id     VARCHAR(32) PRIMARY KEY,
-    product_id  VARCHAR(32) PRIMARY KEY,
-    price       NUMERIC     NOT NULL
+    date        TIMESTAMP WITHOUT TIME ZONE,
+    supplier_id VARCHAR(32),
+    unit_id     VARCHAR(32),
+    product_id  VARCHAR(32),
+    price       NUMERIC     NOT NULL,
+    FOREIGN KEY (supplier_id) REFERENCES public.supplier (id),
+    FOREIGN KEY (unit_id) REFERENCES public.unit (id),
+    FOREIGN KEY (product_id) REFERENCES public.product (id),
+    PRIMARY KEY (date, supplier_id, unit_id, product_id)
 );
+
 

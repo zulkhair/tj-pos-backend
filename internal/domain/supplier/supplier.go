@@ -23,7 +23,7 @@ type BuyPrice struct {
 }
 
 type BuyPriceRequest struct {
-	Date       time.Time               `json:"date"`
+	Date       string                  `json:"date"`
 	SupplierId string                  `json:"supplierId"`
 	UnitId     string                  `json:"unitId"`
 	Prices     []BuyPriceDetailRequest `json:"prices"`
@@ -32,4 +32,12 @@ type BuyPriceRequest struct {
 type BuyPriceDetailRequest struct {
 	ProductID string  `json:"productId"`
 	Price     float64 `json:"price"`
+}
+
+type BuyPriceResponse struct {
+	ProductID   string  `json:"productId"`
+	ProductCode string  `json:"productCode"`
+	ProductName string  `json:"productName"`
+	ProductDesc string  `json:"productDesc"`
+	Price       float64 `json:"price"`
 }

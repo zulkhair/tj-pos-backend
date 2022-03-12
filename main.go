@@ -23,7 +23,7 @@ func main() {
 	global.CONFIG = cfg
 
 	// set up log
-	f, err := os.OpenFile(cfg.LogConfig.LogFilename, os.O_WRONLY|os.O_CREATE, 0755)
+	f, err := os.OpenFile(cfg.LogConfig.LogFilename, os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		logrus.Fatal(err)
 	}
