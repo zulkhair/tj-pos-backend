@@ -3,8 +3,10 @@ package customerhandler
 import (
 	customerdomain "dromatech/pos-backend/internal/domain/customer"
 	restutil "dromatech/pos-backend/internal/util/rest"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
 )
@@ -13,6 +15,8 @@ type customerUsecase interface {
 	Find(id, code, name string) ([]*customerdomain.Customer, error)
 	Create(code, name, description string) error
 	Edit(id, code, name, description string, active bool) error
+	GetSellPrice(supplierId, unitId, date string) ([]*customerdomain.SellPriceResponse, error)
+	UpdateSellPrice(request customerdomain.SellPriceRequest) error
 }
 
 // Handler defines the handler
@@ -107,4 +111,43 @@ func (h *Handler) Edit(c *gin.Context) {
 	}
 
 	restutil.SendResponseOk(c, "Customer berhasil diperbarui", nil)
+}
+
+func (h *Handler) GetSellPrice(c *gin.Context) {
+	supplierId := c.Query("customerId")
+	unitId := c.Query("unitId")
+	date := c.Query("date")
+
+	response, err := h.customerUsecase.GetSellPrice(supplierId, unitId, date)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "", response)
+}
+
+func (h *Handler) UpdateSellPrice(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		logrus.Error(err.Error())
+		restutil.SendResponseFail(c, "Ada kesalahan saat memperbarui harga")
+		return
+	}
+
+	request := customerdomain.SellPriceRequest{}
+	err = json.Unmarshal(jsonData, &request)
+	if err != nil {
+		logrus.Errorf(err.Error())
+		restutil.SendResponseFail(c, "Ada kesalahan saat memperbarui harga")
+		return
+	}
+
+	err = h.customerUsecase.UpdateSellPrice(request)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "Daftar harga berhasil diperbarui", nil)
 }

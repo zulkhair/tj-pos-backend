@@ -105,14 +105,14 @@ CREATE TABLE public.buy_price
 CREATE TABLE public.sell_price
 (
     date        TIMESTAMP WITHOUT TIME ZONE,
-    supplier_id VARCHAR(32),
+    customer_id VARCHAR(32),
     unit_id     VARCHAR(32),
     product_id  VARCHAR(32),
     price       NUMERIC     NOT NULL,
-    FOREIGN KEY (supplier_id) REFERENCES public.supplier (id),
+    FOREIGN KEY (customer_id) REFERENCES public.customer (id),
     FOREIGN KEY (unit_id) REFERENCES public.unit (id),
     FOREIGN KEY (product_id) REFERENCES public.product (id),
-    PRIMARY KEY (date, supplier_id, unit_id, product_id)
+    PRIMARY KEY (date, customer_id, unit_id, product_id)
 );
 
 

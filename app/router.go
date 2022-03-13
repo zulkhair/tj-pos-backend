@@ -40,6 +40,8 @@ func newRoutes(appHandler AppHandler) *gin.Engine {
 	router.GET("/api/customer/find", appHandler.customerHandler.Find)
 	router.POST("/api/customer/edit", appHandler.customerHandler.Edit)
 	router.POST("/api/customer/create", appHandler.customerHandler.Create)
+	router.GET("/api/customer/sell-price", appHandler.customerHandler.GetSellPrice)
+	router.POST("/api/customer/sell-price", appHandler.customerHandler.UpdateSellPrice)
 
 	router.GET("/api/unit/find", appHandler.unitHandler.Find)
 	router.POST("/api/unit/edit", appHandler.unitHandler.Edit)

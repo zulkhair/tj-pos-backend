@@ -21,3 +21,23 @@ type SellPrice struct {
 	Unit     unitdomain.Unit       `json:"unit"`
 	Price    float64               `json:"price"`
 }
+
+type SellPriceRequest struct {
+	Date       string                   `json:"date"`
+	CustomerId string                   `json:"customerId"`
+	UnitId     string                   `json:"unitId"`
+	Prices     []SellPriceDetailRequest `json:"prices"`
+}
+
+type SellPriceDetailRequest struct {
+	ProductID string  `json:"productId"`
+	Price     float64 `json:"price"`
+}
+
+type SellPriceResponse struct {
+	ProductID   string  `json:"productId"`
+	ProductCode string  `json:"productCode"`
+	ProductName string  `json:"productName"`
+	ProductDesc string  `json:"productDesc"`
+	Price       float64 `json:"price"`
+}
