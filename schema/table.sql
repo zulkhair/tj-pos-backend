@@ -87,7 +87,7 @@ CREATE TABLE public.unit
     id          VARCHAR(32),
     code        VARCHAR(32) NOT NULL,
     description VARCHAR(32),
-    active      boolean      NOT NULL DEFAULT true,
+    active      boolean     NOT NULL DEFAULT true,
     PRIMARY KEY (id)
 );
 CREATE TABLE public.buy_price
@@ -96,7 +96,7 @@ CREATE TABLE public.buy_price
     supplier_id VARCHAR(32),
     unit_id     VARCHAR(32),
     product_id  VARCHAR(32),
-    price       NUMERIC     NOT NULL,
+    price       NUMERIC NOT NULL,
     FOREIGN KEY (supplier_id) REFERENCES public.supplier (id),
     FOREIGN KEY (unit_id) REFERENCES public.unit (id),
     FOREIGN KEY (product_id) REFERENCES public.product (id),
@@ -108,11 +108,35 @@ CREATE TABLE public.sell_price
     customer_id VARCHAR(32),
     unit_id     VARCHAR(32),
     product_id  VARCHAR(32),
-    price       NUMERIC     NOT NULL,
+    price       NUMERIC NOT NULL,
     FOREIGN KEY (customer_id) REFERENCES public.customer (id),
     FOREIGN KEY (unit_id) REFERENCES public.unit (id),
     FOREIGN KEY (product_id) REFERENCES public.product (id),
     PRIMARY KEY (date, customer_id, unit_id, product_id)
 );
-
+CREATE TABLE public.transaction
+(
+    id   VARCHAR(32) PRIMARY KEY,
+    code VARCHAR(128) NOT NULL UNIQUE,
+    date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    stakeholder_id VARCHAR(32) NOT NULL,
+    transaction_type VARCHAR(16) NOT NULL
+);
+CREATE TABLE public.transaction_detail
+(
+    transaction_id VARCHAR(128),
+    unit_id VARCHAR(32),
+    product_id VARCHAR(32),
+    price NUMERIC NOT NULL,
+    quantity SMALLINT NOT NULL,
+    FOREIGN KEY (transaction_id) REFERENCES public.transaction (id),
+    FOREIGN KEY (unit_id) REFERENCES public.unit (id),
+    FOREIGN KEY (product_id) REFERENCES public.product (id),
+    PRIMARY KEY (transaction_id, unit_id, product_id)
+);
+CREATE TABLE public.SEQUENCE
+(
+    id VARCHAR(128) PRIMARY KEY,
+    next_value INTEGER NOT NULL DEFAULT 0
+);
 
