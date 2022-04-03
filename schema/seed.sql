@@ -8,7 +8,9 @@ INSERT INTO menu(id, name, seq_order, path, icon)
 VALUES ('web:user', 'User', 0, 'user', 'fas fa-users'),
        ('web:role', 'Role', 1, 'role', 'fas fa-sitemap'),
        ('web:masterdata', 'Master Data', 2, 'master', 'fas fa-database'),
-       ('web:price', 'Harga', 3, 'price', 'fas fa-rupiah-sign')
+       ('web:price', 'Harga', 3, 'price', 'fas fa-rupiah-sign'),
+       ('web:transaction', 'Transaksi', 4, 'transaction', 'fas fa-money-bill-transfer'),
+       ('web:report', 'Laporan', 5, 'report', 'fas fa-book')
 ;
 
 INSERT INTO sub_menu(id, menu_id, name, seq_order, outcome, icon)
@@ -20,7 +22,9 @@ VALUES ('web:user:createUser', 'web:user', 'Tambah Data', 0, '/user/register-use
        ('web:masterdata:supplier', 'web:masterdata', 'Supplier', 1, '/master/supplier.html', 'fas fa-people-carry-box'),
        ('web:masterdata:customer', 'web:masterdata', 'Customer', 2, '/master/customer.html', 'fas fa-user-tag'),
        ('web:price:buy', 'web:price', 'Harga Beli', 0, '/price/buy.html', 'fas fa-cart-shopping'),
-       ('web:price:sell', 'web:price', 'Harga Jual', 1, '/price/sell.html', 'fas fa-cash-register')
+       ('web:price:sell', 'web:price', 'Harga Jual', 1, '/price/sell.html', 'fas fa-cash-register'),
+       ('web:transaction:sell', 'web:transaction', 'Penjualan', 1, '/transaction/sell.html', 'fas fa-cash-register'),
+       ('web:report:view', 'web:report', 'Laporan Transaksi', 1, '/report/transaction.html', 'fas fa-coins')
 ;
 
 ------------ PERMISSION -------------

@@ -51,7 +51,8 @@ CREATE TABLE public.role_permission
     role_id       VARCHAR(32) PRIMARY KEY,
     permission_id VARCHAR(32) PRIMARY KEY,
     FOREIGN KEY (role_id) REFERENCES public.role (id),
-    FOREIGN KEY (permission_id) REFERENCES public.permission (id)
+    FOREIGN KEY (permission_id) REFERENCES public.permission (id),
+    PRIMARY KEY (role_id, permission_id)
 );
 CREATE TABLE public.config
 (
@@ -116,19 +117,22 @@ CREATE TABLE public.sell_price
 );
 CREATE TABLE public.transaction
 (
-    id   VARCHAR(32) PRIMARY KEY,
-    code VARCHAR(128) NOT NULL UNIQUE,
-    date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    stakeholder_id VARCHAR(32) NOT NULL,
-    transaction_type VARCHAR(16) NOT NULL
+    id               VARCHAR(32)                 NOT NULL,
+    code             VARCHAR(128)                NOT NULL,
+    date             TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    stakeholder_id   VARCHAR(32)                 NOT NULL,
+    transaction_type VARCHAR(16)                 NOT NULL,
+    status           VARCHAR(16)                 NOT NULL,
+    reference_code   VARCHAR(128),
+    PRIMARY KEY (id, code)
 );
 CREATE TABLE public.transaction_detail
 (
     transaction_id VARCHAR(128),
-    unit_id VARCHAR(32),
-    product_id VARCHAR(32),
-    price NUMERIC NOT NULL,
-    quantity SMALLINT NOT NULL,
+    unit_id        VARCHAR(32),
+    product_id     VARCHAR(32),
+    price          NUMERIC  NOT NULL,
+    quantity       SMALLINT NOT NULL,
     FOREIGN KEY (transaction_id) REFERENCES public.transaction (id),
     FOREIGN KEY (unit_id) REFERENCES public.unit (id),
     FOREIGN KEY (product_id) REFERENCES public.product (id),
@@ -136,7 +140,7 @@ CREATE TABLE public.transaction_detail
 );
 CREATE TABLE public.SEQUENCE
 (
-    id VARCHAR(128) PRIMARY KEY,
+    id         VARCHAR(128) PRIMARY KEY,
     next_value INTEGER NOT NULL DEFAULT 0
 );
 
