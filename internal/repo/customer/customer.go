@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"dromatech/pos-backend/global"
 	customerdomain "dromatech/pos-backend/internal/domain/customer"
+	queryutil "dromatech/pos-backend/internal/util/query"
 	"fmt"
 	"github.com/sirupsen/logrus"
 )
@@ -12,7 +13,7 @@ type CustomerRepo interface {
 	Find(params map[string]interface{}) ([]*customerdomain.Customer, error)
 	Create(product *customerdomain.Customer) error
 	Edit(product *customerdomain.Customer) error
-	GetSellPrice(supplierId, unitId, date string) ([]*customerdomain.SellPriceResponse, error)
+	GetSellPrice(params []queryutil.Param) ([]*customerdomain.SellPriceResponse, error)
 	UpdateSellPrice(request customerdomain.SellPriceRequest) error
 	DeleteSellPrice(supplierId, unitId, date string) error
 }
@@ -99,11 +100,28 @@ func (r *Repo) Edit(entity *customerdomain.Customer) error {
 		"WHERE id=?;", entity.Code, entity.Name, entity.Description, entity.Active, entity.ID).Error
 }
 
-func (r *Repo) GetSellPrice(customerId, unitId, date string) ([]*customerdomain.SellPriceResponse, error) {
-	rows, err := global.DBCON.Raw("SELECT p.id, p.code, p.name, p.description, bp.price FROM product p "+
+func (r *Repo) GetSellPrice(params []queryutil.Param) ([]*customerdomain.SellPriceResponse, error) {
+	where := ""
+	var values []interface{}
+	for _, param := range params {
+		if where != "" {
+			logic := "AND "
+			if param.Logic != "" {
+				logic = param.Logic + " "
+			}
+			where += logic
+		}
+		where += param.Field + " " + param.Operator + " ? "
+		values = append(values, param.Value)
+	}
+
+	if where != "" {
+		where = "WHERE " + where
+	}
+
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT p.id, p.code, p.name, p.description, bp.price FROM product p "+
 		"JOIN sell_price bp ON (p.id = bp.product_id) "+
-		"WHERE bp.customer_id = ? AND bp.unit_id = ? AND bp.date = ? "+
-		"ORDER BY p.code", customerId, unitId, date).Rows()
+		"%s ORDER BY p.code", where), values...).Rows()
 
 	if err != nil {
 		logrus.Error(err.Error())

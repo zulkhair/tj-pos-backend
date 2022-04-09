@@ -1,7 +1,5 @@
 package transactiondomain
 
-import "time"
-
 const TRANSACTION_TYPE_BUY = "BUY"
 const TRANSACTION_TYPE_SELL = "SELL"
 const TRANSACTION_STATUS_PEMBUATAN = "PEMBUATAN"
@@ -13,7 +11,7 @@ const TRANSACTION_STATUS_BATAL = "BATAL"
 type Transaction struct {
 	ID                string               `json:"id"`
 	Code              string               `json:"code"`
-	Date              time.Time            `json:"date"`
+	Date              string               `json:"date"`
 	StakeholderID     string               `json:"stakeholderId"`
 	TransactionType   string               `json:"transactionType"`
 	Status            string               `json:"status"`

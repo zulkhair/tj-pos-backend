@@ -19,8 +19,8 @@ func New() *Repo {
 	return repo
 }
 
-func nextVal(id string) int64 {
-	row := global.DBCON.Raw("SELECT id, value FROM public.sequence WHERE id = ?", id).Row()
+func nextVal(id string, tx *gorm.DB) int64 {
+	row := tx.Raw("SELECT id, next_value FROM public.sequence WHERE id = ?", id).Row()
 
 	var ID sql.NullString
 	var NextValue sql.NullInt64
@@ -28,7 +28,7 @@ func nextVal(id string) int64 {
 	row.Scan(&ID, &NextValue)
 
 	if !ID.Valid || ID.String == "" {
-		return int64(0)
+		return int64(1)
 	} else {
 		return NextValue.Int64
 	}
@@ -43,13 +43,13 @@ func (r *Repo) NextVal(id string) int64 {
 }
 
 func (r *Repo) NextValTx(id string, tx *gorm.DB) int64 {
-	nextVal := nextVal(id)
+	nextVal := nextVal(id, tx)
 
-	if nextVal == 0 {
-		tx.Exec("INSERT INTO public.sequence(id, next_value) VALUES (?, ?);", id, 0)
-		return int64(0)
+	if nextVal == 1 {
+		tx.Exec("INSERT INTO public.sequence(id, next_value) VALUES (?, ?);", id, 2)
+		return int64(2)
 	} else {
-		tx.Exec("UPDATE public.sequence SET next_value=? WHERE id=?;", nextVal, id)
+		tx.Exec("UPDATE public.sequence SET next_value=? WHERE id=?;", nextVal+1, id)
 		return nextVal
 	}
 }

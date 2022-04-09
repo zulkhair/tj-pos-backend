@@ -15,7 +15,7 @@ type customerUsecase interface {
 	Find(id, code, name string) ([]*customerdomain.Customer, error)
 	Create(code, name, description string) error
 	Edit(id, code, name, description string, active bool) error
-	GetSellPrice(supplierId, unitId, date string) ([]*customerdomain.SellPriceResponse, error)
+	GetSellPrice(customerId, unitId, date, productId string) ([]*customerdomain.SellPriceResponse, error)
 	UpdateSellPrice(request customerdomain.SellPriceRequest) error
 }
 
@@ -117,8 +117,9 @@ func (h *Handler) GetSellPrice(c *gin.Context) {
 	supplierId := c.Query("customerId")
 	unitId := c.Query("unitId")
 	date := c.Query("date")
+	productId := c.Query("productId")
 
-	response, err := h.customerUsecase.GetSellPrice(supplierId, unitId, date)
+	response, err := h.customerUsecase.GetSellPrice(supplierId, unitId, date, productId)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return

@@ -9,7 +9,7 @@ VALUES ('web:user', 'User', 0, 'user', 'fas fa-users'),
        ('web:role', 'Role', 1, 'role', 'fas fa-sitemap'),
        ('web:masterdata', 'Master Data', 2, 'master', 'fas fa-database'),
        ('web:price', 'Harga', 3, 'price', 'fas fa-rupiah-sign'),
-       ('web:transaction', 'Transaksi', 4, 'transaction', 'fas fa-money-bill-transfer'),
+       ('web:transaction', 'Transaksi', 4, 'transaction', 'fas fa-money-bill'),
        ('web:report', 'Laporan', 5, 'report', 'fas fa-book')
 ;
 
@@ -23,7 +23,8 @@ VALUES ('web:user:createUser', 'web:user', 'Tambah Data', 0, '/user/register-use
        ('web:masterdata:customer', 'web:masterdata', 'Customer', 2, '/master/customer.html', 'fas fa-user-tag'),
        ('web:price:buy', 'web:price', 'Harga Beli', 0, '/price/buy.html', 'fas fa-cart-shopping'),
        ('web:price:sell', 'web:price', 'Harga Jual', 1, '/price/sell.html', 'fas fa-cash-register'),
-       ('web:transaction:sell', 'web:transaction', 'Penjualan', 1, '/transaction/sell.html', 'fas fa-cash-register'),
+       ('web:transaction:sell', 'web:transaction', 'Penjualan', 0, '/transaction/sell.html', 'fas fa-cash-register'),
+       ('web:transaction:buy', 'web:transaction', 'Pembelian', 1, '/transaction/buy.html', 'fas fa-bag-shopping'),
        ('web:report:view', 'web:report', 'Laporan Transaksi', 1, '/report/transaction.html', 'fas fa-coins')
 ;
 
@@ -43,8 +44,10 @@ VALUES ('web:user:createUser', 'web:user:createUser', 'Registrasi', 0, '/api/rol
        ('web:masterdata:customer:add', 'web:masterdata:customer', 'Tambah Data Customer', 0, '/api/customer/find;/api/customer/create;/api/auth/check'),
        ('web:masterdata:customer:view', 'web:masterdata:customer', 'Lihat Data Customer', 1, '/api/customer/find;/api/auth/check'),
        ('web:masterdata:customer:edit', 'web:masterdata:customer', 'Perbarui Data Customer', 2, '/api/customer/find;/api/customer/edit;/api/auth/check'),
-       ('web:price:buy:manage', 'web:price:buy', 'Kelola Harga Beli', 0, '/api/unit/find;/api/unit/edit;/api/unit/create;/api/supplier/find;/api/product/find;/api/supplier/buy-price'),
-       ('web:price:sell:manage', 'web:price:sell', 'Kelola Harga Jual', 0, '/api/unit/find;/api/unit/edit;/api/unit/create;/api/supplier/find;/api/product/find;/api/customer/sell-price')
+       ('web:price:buy:manage', 'web:price:buy', 'Kelola Harga Beli', 0, '/api/unit/find;/api/unit/edit;/api/unit/create;/api/supplier/find;/api/product/find;/api/supplier/buy-price;/api/supplier/update-buy-price'),
+       ('web:price:sell:manage', 'web:price:sell', 'Kelola Harga Jual', 0, '/api/unit/find;/api/unit/edit;/api/unit/create;/api/supplier/find;/api/product/find;/api/customer/sell-price;/api/supplier/update-sell-price'),
+       ('web:transaction:sell:add', 'web:transaction:sell', 'Penjualan', 0, '/api/transaction/create;/api/unit/find;/api/customer/find;/api/product/find;/api/customer/sell-price')
+       ('web:transaction:buy:add', 'web:transaction:buy', 'Pembelian', 0, '/api/transaction/create;/api/unit/find;/api/supplier/find;/api/product/find;/api/customer/buy-price')
 ;
 
 ----------------- ROLE ---------------

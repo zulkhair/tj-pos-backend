@@ -2,6 +2,7 @@ package supplierusecase
 
 import (
 	supplierdomain "dromatech/pos-backend/internal/domain/supplier"
+	queryutil "dromatech/pos-backend/internal/util/query"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -12,7 +13,7 @@ type SupplierUsecase interface {
 	Find(id, code, name string, active *bool) ([]*supplierdomain.Supplier, error)
 	Create(code, name, description string) error
 	Edit(id, code, name, description string, active bool) error
-	GetBuyPrice(supplierId, unitId, date string) ([]*supplierdomain.BuyPriceResponse, error)
+	GetBuyPrice(supplierId, unitId, date, productId string) ([]*supplierdomain.BuyPriceResponse, error)
 	UpdateBuyPrice(request supplierdomain.BuyPriceRequest) error
 }
 
@@ -24,7 +25,7 @@ type supplierRepo interface {
 	Find(params map[string]interface{}) ([]*supplierdomain.Supplier, error)
 	Create(product *supplierdomain.Supplier) error
 	Edit(product *supplierdomain.Supplier) error
-	GetBuyPrice(supplierId, unitId, date string) ([]*supplierdomain.BuyPriceResponse, error)
+	GetBuyPrice(params []queryutil.Param) ([]*supplierdomain.BuyPriceResponse, error)
 	UpdateBuyPrice(request supplierdomain.BuyPriceRequest) error
 	DeleteBuyPrice(supplierId, unitId, date string) error
 }
@@ -124,18 +125,42 @@ func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 	return nil
 }
 
-func (uc *Usecase) GetBuyPrice(supplierId, unitId, date string) ([]*supplierdomain.BuyPriceResponse, error) {
-	if supplierId == "" {
-		return nil, fmt.Errorf("Harap pilih supplier terlebih dahulu")
+func (uc *Usecase) GetBuyPrice(supplierId, unitId, date, productId string) ([]*supplierdomain.BuyPriceResponse, error) {
+	var param []queryutil.Param
+	if supplierId != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "bp.supplier_id",
+			Operator: "=",
+			Value:    supplierId,
+		})
 	}
-	if unitId == "" {
-		return nil, fmt.Errorf("Harap pilih satuan terlebih dahulu")
+	if unitId != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "bp.unit_id",
+			Operator: "=",
+			Value:    unitId,
+		})
 	}
-	if date == "" {
-		return nil, fmt.Errorf("Harap pilih tanggal terlebih dahulu")
+	if date != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "bp.date",
+			Operator: "=",
+			Value:    date,
+		})
+	}
+	if productId != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "p.id",
+			Operator: "=",
+			Value:    productId,
+		})
 	}
 
-	entities, err := uc.supplierRepo.GetBuyPrice(supplierId, unitId, date)
+	entities, err := uc.supplierRepo.GetBuyPrice(param)
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, fmt.Errorf("Terjadi kesalahan saat melakukan pencarian data harga")

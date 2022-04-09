@@ -70,11 +70,6 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	if transaction.ReferenceCode == "" {
-		restutil.SendResponseFail(c, "Harap isi kode referensi")
-		return
-	}
-
 	err = h.transactionUsecase.CreateTransaction(transaction)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())

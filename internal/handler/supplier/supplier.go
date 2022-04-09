@@ -16,7 +16,7 @@ type supplierUsecase interface {
 	Find(id, code, name string, active *bool) ([]*supplierdomain.Supplier, error)
 	Create(code, name, description string) error
 	Edit(id, code, name, description string, active bool) error
-	GetBuyPrice(supplierId, unitId, date string) ([]*supplierdomain.BuyPriceResponse, error)
+	GetBuyPrice(supplierId, unitId, date, productId string) ([]*supplierdomain.BuyPriceResponse, error)
 	UpdateBuyPrice(request supplierdomain.BuyPriceRequest) error
 }
 
@@ -130,8 +130,9 @@ func (h *Handler) GetBuyPrice(c *gin.Context) {
 	supplierId := c.Query("supplierId")
 	unitId := c.Query("unitId")
 	date := c.Query("date")
+	productId := c.Query("productId")
 
-	response, err := h.supplierUsecase.GetBuyPrice(supplierId, unitId, date)
+	response, err := h.supplierUsecase.GetBuyPrice(supplierId, unitId, date, productId)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return

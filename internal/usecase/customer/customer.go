@@ -2,6 +2,7 @@ package customerusecase
 
 import (
 	customerdomain "dromatech/pos-backend/internal/domain/customer"
+	queryutil "dromatech/pos-backend/internal/util/query"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -24,7 +25,7 @@ type customerRepo interface {
 	Find(params map[string]interface{}) ([]*customerdomain.Customer, error)
 	Create(product *customerdomain.Customer) error
 	Edit(product *customerdomain.Customer) error
-	GetSellPrice(supplierId, unitId, date string) ([]*customerdomain.SellPriceResponse, error)
+	GetSellPrice(params []queryutil.Param) ([]*customerdomain.SellPriceResponse, error)
 	UpdateSellPrice(request customerdomain.SellPriceRequest) error
 	DeleteSellPrice(supplierId, unitId, date string) error
 }
@@ -121,18 +122,42 @@ func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 	return nil
 }
 
-func (uc *Usecase) GetSellPrice(customerId, unitId, date string) ([]*customerdomain.SellPriceResponse, error) {
-	if customerId == "" {
-		return nil, fmt.Errorf("Harap pilih customer terlebih dahulu")
+func (uc *Usecase) GetSellPrice(customerId, unitId, date, productId string) ([]*customerdomain.SellPriceResponse, error) {
+	var param []queryutil.Param
+	if customerId != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "bp.customer_id",
+			Operator: "=",
+			Value:    customerId,
+		})
 	}
-	if unitId == "" {
-		return nil, fmt.Errorf("Harap pilih satuan terlebih dahulu")
+	if unitId != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "bp.unit_id",
+			Operator: "=",
+			Value:    unitId,
+		})
 	}
-	if date == "" {
-		return nil, fmt.Errorf("Harap pilih tanggal terlebih dahulu")
+	if date != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "bp.date",
+			Operator: "=",
+			Value:    date,
+		})
+	}
+	if productId != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "p.id",
+			Operator: "=",
+			Value:    productId,
+		})
 	}
 
-	entities, err := uc.customerRepo.GetSellPrice(customerId, unitId, date)
+	entities, err := uc.customerRepo.GetSellPrice(param)
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, fmt.Errorf("Terjadi kesalahan saat melakukan pencarian data harga")

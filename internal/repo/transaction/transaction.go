@@ -84,7 +84,7 @@ func (r *Repo) Find(params []queryutil.Param) ([]*transactiondomain.Transaction,
 			entity = &transactiondomain.Transaction{}
 			entity.ID = ID.String
 			entity.Code = Code.String
-			entity.Date = Date
+			entity.Date = Date.Format("2006-0102")
 			entity.StakeholderID = StakeholderID.String
 			entity.TransactionType = TransactionType.String
 			entity.Status = Status.String
@@ -107,9 +107,9 @@ func (r *Repo) Find(params []queryutil.Param) ([]*transactiondomain.Transaction,
 }
 
 func (r *Repo) Create(entity *transactiondomain.Transaction, tx *gorm.DB) {
-	tx.Exec("INSERT INTO public.transaction(id, code, date, stakeholder_id, transaction_type, status) "+
-		"VALUES (?, ?, ?, ?, ?, ?);",
-		entity.ID, entity.Code, entity.Date, entity.StakeholderID, entity.TransactionType, entity.Status)
+	tx.Exec("INSERT INTO public.transaction(id, code, date, stakeholder_id, transaction_type, status, reference_code) "+
+		"VALUES (?, ?, ?, ?, ?, ?, ?);",
+		entity.ID, entity.Code, entity.Date, entity.StakeholderID, entity.TransactionType, entity.Status, entity.ReferenceCode)
 
 	if tx.Error != nil {
 		return

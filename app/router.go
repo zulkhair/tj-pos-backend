@@ -35,13 +35,13 @@ func newRoutes(appHandler AppHandler) *gin.Engine {
 	router.POST("/api/supplier/edit", appHandler.supplierHandler.Edit)
 	router.POST("/api/supplier/create", appHandler.supplierHandler.Create)
 	router.GET("/api/supplier/buy-price", appHandler.supplierHandler.GetBuyPrice)
-	router.POST("/api/supplier/buy-price", appHandler.supplierHandler.UpdateBuyPrice)
+	router.POST("/api/supplier/update-buy-price", appHandler.supplierHandler.UpdateBuyPrice)
 
 	router.GET("/api/customer/find", appHandler.customerHandler.Find)
 	router.POST("/api/customer/edit", appHandler.customerHandler.Edit)
 	router.POST("/api/customer/create", appHandler.customerHandler.Create)
 	router.GET("/api/customer/sell-price", appHandler.customerHandler.GetSellPrice)
-	router.POST("/api/customer/sell-price", appHandler.customerHandler.UpdateSellPrice)
+	router.POST("/api/customer/update-sell-price", appHandler.customerHandler.UpdateSellPrice)
 
 	router.GET("/api/unit/find", appHandler.unitHandler.Find)
 	router.POST("/api/unit/edit", appHandler.unitHandler.Edit)
