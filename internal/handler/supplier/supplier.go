@@ -18,6 +18,8 @@ type supplierUsecase interface {
 	Edit(id, code, name, description string, active bool) error
 	GetBuyPrice(supplierId, unitId, date, productId string) ([]*supplierdomain.BuyPriceResponse, error)
 	UpdateBuyPrice(request supplierdomain.BuyPriceRequest) error
+	AddBuyPrice(entity supplierdomain.AddPriceRequest, userId string) error
+	FindBuyPrice(customerId, unitId, productId string, latest *bool) ([]*supplierdomain.PriceResponse, error)
 }
 
 // Handler defines the handler
@@ -164,4 +166,67 @@ func (h *Handler) UpdateBuyPrice(c *gin.Context) {
 	}
 
 	restutil.SendResponseOk(c, "Daftar harga berhasil diperbarui", nil)
+}
+
+func (h *Handler) AddPrice(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		logrus.Error(err.Error())
+		restutil.SendResponseFail(c, "Ada kesalahan saat menambahkan data harga")
+		return
+	}
+
+	request := supplierdomain.AddPriceRequest{}
+	err = json.Unmarshal(jsonData, &request)
+	if err != nil {
+		logrus.Errorf(err.Error())
+		restutil.SendResponseFail(c, "Ada kesalahan saat menambahkan data harga")
+		return
+	}
+
+	userId := restutil.GetSession(c).UserID
+	err = h.supplierUsecase.AddBuyPrice(request, userId)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "Data harga berhasil diperbarui", nil)
+}
+
+func (h *Handler) FindLatestPrice(c *gin.Context) {
+	supplierId := c.Query("supplierId")
+	unitId := c.Query("unitId")
+
+	latest := true
+	response, err := h.supplierUsecase.FindBuyPrice(supplierId, unitId, "", &latest)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "", response)
+}
+
+func (h *Handler) FindPrice(c *gin.Context) {
+	supplierId := c.Query("supplierId")
+	unitId := c.Query("unitId")
+	productId := c.Query("productId")
+	latest := c.Query("latest")
+
+	var pointerBool *bool
+	latestBool, err := strconv.ParseBool(latest)
+	if err != nil {
+		pointerBool = nil
+	} else {
+		pointerBool = &latestBool
+	}
+
+	response, err := h.supplierUsecase.FindBuyPrice(supplierId, unitId, productId, pointerBool)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "", response)
 }

@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"dromatech/pos-backend/global"
 	customerdomain "dromatech/pos-backend/internal/domain/customer"
+	dateutil "dromatech/pos-backend/internal/util/date"
 	queryutil "dromatech/pos-backend/internal/util/query"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 type CustomerRepo interface {
@@ -16,6 +18,7 @@ type CustomerRepo interface {
 	GetSellPrice(params []queryutil.Param) ([]*customerdomain.SellPriceResponse, error)
 	UpdateSellPrice(request customerdomain.SellPriceRequest) error
 	DeleteSellPrice(supplierId, unitId, date string) error
+	AddSellPrice(entity customerdomain.AddPriceRequest) error
 }
 
 type Repo struct {
@@ -179,4 +182,92 @@ func (r *Repo) DeleteSellPrice(customerId, unitId, date string) error {
 		customerId, unitId, date)
 
 	return tx.Error
+}
+
+func (r *Repo) AddSellPrice(entity customerdomain.AddPriceRequest) error {
+
+	tx := global.DBCON.Begin()
+
+	tx.Exec("UPDATE public.sell_price SET latest=FALSE "+
+		"WHERE customer_id = ? AND unit_id = ? AND product_id = ? AND latest=TRUE;", entity.CustomerId, entity.UnitId, entity.ProductID)
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	tx.Exec("INSERT INTO public.sell_price(id, date, customer_id, unit_id, product_id, price, web_user_id, latest) "+
+		"VALUES (?, ?, ?, ?, ?, ?, ?, ?)", entity.ID, entity.Date, entity.CustomerId, entity.UnitId, entity.ProductID, entity.Price, entity.WebUserId, entity.Latest)
+
+	if tx.Error != nil {
+		tx.Rollback()
+		return tx.Error
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (r *Repo) FindSellPrice(params []queryutil.Param) ([]*customerdomain.PriceResponse, error) {
+	where := ""
+	var values []interface{}
+	for _, param := range params {
+		if where != "" {
+			logic := "AND "
+			if param.Logic != "" {
+				logic = param.Logic + " "
+			}
+			where += logic
+		}
+		where += param.Field + " " + param.Operator + " ? "
+		values = append(values, param.Value)
+	}
+
+	if where != "" {
+		where = "WHERE " + where
+	}
+
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT s.id, s.date, s.customer_id, s.unit_id, s.product_id, s.price, w.username, w.name "+
+		"FROM public.sell_price s "+
+		"JOIN public.web_user w ON (w.id = s.web_user_id) "+
+		"%s ORDER BY date DESC ", where), values...).Rows()
+
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entities []*customerdomain.PriceResponse
+
+	for rows.Next() {
+		var ID sql.NullString
+		var Date time.Time
+		var CustomerId sql.NullString
+		var UnitId sql.NullString
+		var ProductId sql.NullString
+		var Price sql.NullFloat64
+		var WebUsername sql.NullString
+		var WebUserName sql.NullString
+
+		rows.Scan(&ID, &Date, &CustomerId, &UnitId, &ProductId, &Price, &WebUsername, &WebUserName)
+
+		if !ID.Valid && ID.String == "" {
+			return nil, nil
+		}
+
+		entity := &customerdomain.PriceResponse{
+			ID:          ID.String,
+			Date:        Date.Format(dateutil.TimeFormat()),
+			CustomerId:  CustomerId.String,
+			UnitId:      UnitId.String,
+			ProductID:   ProductId.String,
+			Price:       Price.Float64,
+			WebUsername: WebUsername.String,
+			WebUserName: WebUserName.String,
+		}
+
+		entities = append(entities, entity)
+	}
+
+	return entities, nil
 }

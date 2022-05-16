@@ -93,38 +93,45 @@ CREATE TABLE public.unit
 );
 CREATE TABLE public.buy_price
 (
-    date        TIMESTAMP WITHOUT TIME ZONE,
-    supplier_id VARCHAR(32),
-    unit_id     VARCHAR(32),
-    product_id  VARCHAR(32),
-    price       NUMERIC NOT NULL,
+    id               VARCHAR(32) PRIMARY KEY,
+    date             TIMESTAMP WITHOUT TIME ZONE,
+    supplier_id      VARCHAR(32),
+    unit_id          VARCHAR(32) NOT NULL,
+    product_id       VARCHAR(32) NOT NULL,
+    price            NUMERIC     NOT NULL,
+    web_user_id      VARCHAR(32) NOT NULL,
+    latest           BOOLEAN DEFAULT FALSE,
+    transaction_code VARCHAR(128),
+    FOREIGN KEY (web_user_id) REFERENCES public.web_user (id),
     FOREIGN KEY (supplier_id) REFERENCES public.supplier (id),
     FOREIGN KEY (unit_id) REFERENCES public.unit (id),
-    FOREIGN KEY (product_id) REFERENCES public.product (id),
-    PRIMARY KEY (date, supplier_id, unit_id, product_id)
+    FOREIGN KEY (product_id) REFERENCES public.product (id)
 );
 CREATE TABLE public.sell_price
 (
+    id          VARCHAR(32) PRIMARY KEY,
     date        TIMESTAMP WITHOUT TIME ZONE,
-    customer_id VARCHAR(32),
-    unit_id     VARCHAR(32),
-    product_id  VARCHAR(32),
-    price       NUMERIC NOT NULL,
+    customer_id VARCHAR(32) NOT NULL,
+    unit_id     VARCHAR(32) NOT NULL,
+    product_id  VARCHAR(32) NOT NULL,
+    price       NUMERIC     NOT NULL,
+    web_user_id VARCHAR(32) NOT NULL,
+    latest      BOOLEAN DEFAULT FALSE,
+    transaction_code VARCHAR(128),
+    FOREIGN KEY (web_user_id) REFERENCES public.web_user (id),
     FOREIGN KEY (customer_id) REFERENCES public.customer (id),
     FOREIGN KEY (unit_id) REFERENCES public.unit (id),
-    FOREIGN KEY (product_id) REFERENCES public.product (id),
-    PRIMARY KEY (date, customer_id, unit_id, product_id)
+    FOREIGN KEY (product_id) REFERENCES public.product (id)
 );
 CREATE TABLE public.transaction
 (
-    id               VARCHAR(32)                 NOT NULL,
-    code             VARCHAR(128)                NOT NULL,
+    id               VARCHAR(32)                 NOT NULL PRIMARY KEY,
+    code             VARCHAR(128)                NOT NULL UNIQUE,
     date             TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     stakeholder_id   VARCHAR(32)                 NOT NULL,
     transaction_type VARCHAR(16)                 NOT NULL,
     status           VARCHAR(16)                 NOT NULL,
-    reference_code   VARCHAR(128),
-    PRIMARY KEY (id, code)
+    reference_code   VARCHAR(128)
 );
 CREATE TABLE public.transaction_detail
 (
@@ -133,6 +140,9 @@ CREATE TABLE public.transaction_detail
     product_id     VARCHAR(32),
     price          NUMERIC  NOT NULL,
     quantity       SMALLINT NOT NULL,
+    date           TIMESTAMP WITHOUT TIME ZONE,
+    web_user_id    VARCHAR(32),
+    FOREIGN KEY (web_user_id) REFERENCES public.web_user (id),
     FOREIGN KEY (transaction_id) REFERENCES public.transaction (id),
     FOREIGN KEY (unit_id) REFERENCES public.unit (id),
     FOREIGN KEY (product_id) REFERENCES public.product (id),

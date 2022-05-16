@@ -2,11 +2,14 @@ package customerusecase
 
 import (
 	customerdomain "dromatech/pos-backend/internal/domain/customer"
+	dateutil "dromatech/pos-backend/internal/util/date"
 	queryutil "dromatech/pos-backend/internal/util/query"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type CustmerUsecase interface {
@@ -28,6 +31,8 @@ type customerRepo interface {
 	GetSellPrice(params []queryutil.Param) ([]*customerdomain.SellPriceResponse, error)
 	UpdateSellPrice(request customerdomain.SellPriceRequest) error
 	DeleteSellPrice(supplierId, unitId, date string) error
+	AddSellPrice(entity customerdomain.AddPriceRequest) error
+	FindSellPrice(params []queryutil.Param) ([]*customerdomain.PriceResponse, error)
 }
 
 func New(customerRepo customerRepo) *Usecase {
@@ -186,4 +191,62 @@ func (uc *Usecase) UpdateSellPrice(request customerdomain.SellPriceRequest) erro
 		return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data harga")
 	}
 	return nil
+}
+
+func (uc *Usecase) AddSellPrice(entity customerdomain.AddPriceRequest, userId string) error {
+	entity.ID = strings.ReplaceAll(uuid.NewString(), "-", "")
+	entity.Date = time.Now().Format(dateutil.TimeFormat())
+	entity.WebUserId = userId
+	entity.Latest = true
+	entity.WebUserId = userId
+
+	err := uc.customerRepo.AddSellPrice(entity)
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat menambahkan data harga")
+	}
+
+	return nil
+}
+
+func (uc *Usecase) FindSellPrice(customerId, unitId, productId string, latest *bool) ([]*customerdomain.PriceResponse, error) {
+	var param []queryutil.Param
+	if customerId != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "s.customer_id",
+			Operator: "=",
+			Value:    customerId,
+		})
+	}
+	if unitId != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "s.unit_id",
+			Operator: "=",
+			Value:    unitId,
+		})
+	}
+	if productId != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "s.product_id",
+			Operator: "=",
+			Value:    productId,
+		})
+	}
+	if latest != nil {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "s.latest",
+			Operator: "=",
+			Value:    strconv.FormatBool(*latest),
+		})
+	}
+	entities, err := uc.customerRepo.FindSellPrice(param)
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, fmt.Errorf("Terjadi kesalahan saat melakukan pencarion data harga")
+	}
+	return entities, nil
 }

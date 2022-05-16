@@ -14,6 +14,28 @@ type Customer struct {
 	Active      bool   `json:"active"`
 }
 
+type AddPriceRequest struct {
+	ID         string  `json:"id"`
+	Date       string  `json:"date"`
+	CustomerId string  `json:"customerId"`
+	UnitId     string  `json:"unitId"`
+	ProductID  string  `json:"productId"`
+	Price      float64 `json:"price"`
+	WebUserId  string  `json:"webUserId"`
+	Latest     bool    `json:"latest"`
+}
+
+type PriceResponse struct {
+	ID          string  `json:"id"`
+	Date        string  `json:"date"`
+	CustomerId  string  `json:"customerId"`
+	UnitId      string  `json:"unitId"`
+	ProductID   string  `json:"productId"`
+	Price       float64 `json:"price"`
+	WebUsername string  `json:"webUsername"`
+	WebUserName string  `json:"webUserName"`
+}
+
 type SellPrice struct {
 	Date     time.Time             `json:"date"`
 	Customer Customer              `json:"customer"`

@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
+	"strconv"
 )
 
 type customerUsecase interface {
@@ -17,6 +18,8 @@ type customerUsecase interface {
 	Edit(id, code, name, description string, active bool) error
 	GetSellPrice(customerId, unitId, date, productId string) ([]*customerdomain.SellPriceResponse, error)
 	UpdateSellPrice(request customerdomain.SellPriceRequest) error
+	AddSellPrice(entity customerdomain.AddPriceRequest, userId string) error
+	FindSellPrice(customerId, unitId, productId string, latest *bool) ([]*customerdomain.PriceResponse, error)
 }
 
 // Handler defines the handler
@@ -128,6 +131,32 @@ func (h *Handler) GetSellPrice(c *gin.Context) {
 	restutil.SendResponseOk(c, "", response)
 }
 
+func (h *Handler) AddPrice(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		logrus.Error(err.Error())
+		restutil.SendResponseFail(c, "Ada kesalahan saat menambahkan data harga")
+		return
+	}
+
+	request := customerdomain.AddPriceRequest{}
+	err = json.Unmarshal(jsonData, &request)
+	if err != nil {
+		logrus.Errorf(err.Error())
+		restutil.SendResponseFail(c, "Ada kesalahan saat menambahkan data harga")
+		return
+	}
+
+	userId := restutil.GetSession(c).UserID
+	err = h.customerUsecase.AddSellPrice(request, userId)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "Data harga berhasil diperbarui", nil)
+}
+
 func (h *Handler) UpdateSellPrice(c *gin.Context) {
 	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -151,4 +180,41 @@ func (h *Handler) UpdateSellPrice(c *gin.Context) {
 	}
 
 	restutil.SendResponseOk(c, "Daftar harga berhasil diperbarui", nil)
+}
+
+func (h *Handler) FindLatestPrice(c *gin.Context) {
+	customerId := c.Query("customerId")
+	unitId := c.Query("unitId")
+
+	latest := true
+	response, err := h.customerUsecase.FindSellPrice(customerId, unitId, "", &latest)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "", response)
+}
+
+func (h *Handler) FindPrice(c *gin.Context) {
+	customerId := c.Query("customerId")
+	unitId := c.Query("unitId")
+	productId := c.Query("productId")
+	latest := c.Query("latest")
+
+	var pointerBool *bool
+	latestBool, err := strconv.ParseBool(latest)
+	if err != nil {
+		pointerBool = nil
+	} else {
+		pointerBool = &latestBool
+	}
+
+	response, err := h.customerUsecase.FindSellPrice(customerId, unitId, productId, pointerBool)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "", response)
 }

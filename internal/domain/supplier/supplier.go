@@ -41,3 +41,25 @@ type BuyPriceResponse struct {
 	ProductDesc string  `json:"productDesc"`
 	Price       float64 `json:"price"`
 }
+
+type AddPriceRequest struct {
+	ID         string  `json:"id"`
+	Date       string  `json:"date"`
+	SupplierId string  `json:"supplierId"`
+	UnitId     string  `json:"unitId"`
+	ProductID  string  `json:"productId"`
+	Price      float64 `json:"price"`
+	WebUserId  string  `json:"webUserId"`
+	Latest     bool    `json:"latest"`
+}
+
+type PriceResponse struct {
+	ID          string  `json:"id"`
+	Date        string  `json:"date"`
+	SupplierId  string  `json:"supplierId"`
+	UnitId      string  `json:"unitId"`
+	ProductID   string  `json:"productId"`
+	Price       float64 `json:"price"`
+	WebUsername string  `json:"webUsername"`
+	WebUserName string  `json:"webUserName"`
+}
