@@ -24,7 +24,7 @@ VALUES ('web:user:createUser', 'web:user', 'Tambah Data', 0, '/user/register-use
        ('web:price:buy', 'web:masterdata', 'Harga Beli', 3, '/price/buy.html', 'fas fa-cart-shopping'),
        ('web:price:sell', 'web:masterdata', 'Harga Jual', 4, '/price/sell.html', 'fas fa-cash-register'),
        ('web:price:template', 'web:masterdata', 'Template Harga', 4, '/price/template.html', 'fas fa-cash-register'),
-       ('web:transaction:sell', 'web:transaction', 'Penjualan', 2, '/transaction/sell.html', 'fas fa-cash-register'),
+       ('web:transaction:sell', 'web:transaction', 'Penjualan', 2, '/transaction/sell.html', 'fas fa-money-check'),
        ('web:transaction:status', 'web:transaction', 'Status', 3, '/transaction/status.html', 'fas fa-clipboard-list'),
        ('web:transaction:kontrabon', 'web:transaction', 'Kontrabon', 3, '/transaction/kontrabon.html', 'fas fa-clipboard-list'),
 --        ('web:transaction:buy', 'web:transaction', 'Pembelian', 1, '/transaction/buy.html', 'fas fa-bag-shopping'),
