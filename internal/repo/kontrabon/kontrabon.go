@@ -1,25 +1,25 @@
-package transactionrepo
+package kontrabonrepo
 
 import (
 	"database/sql"
 	"dromatech/pos-backend/global"
+	kontrabondomain "dromatech/pos-backend/internal/domain/kontrabon"
 	transactiondomain "dromatech/pos-backend/internal/domain/transaction"
 	dateutil "dromatech/pos-backend/internal/util/date"
 	queryutil "dromatech/pos-backend/internal/util/query"
-	stringutil "dromatech/pos-backend/internal/util/string"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"time"
 )
 
-type TransactionRepo interface {
-	Find(params []queryutil.Param) ([]*transactiondomain.Transaction, error)
-	Create(entity *transactiondomain.Transaction, tx *gorm.DB)
-	Edit(product *transactiondomain.Transaction) error
-	UpdateStatus(transactionID, status string) error
-	UpdatePrice(transactionID, productID string, buyPrice, sellPrice float64, quantity, buyQuantity int64) error
-	FindSells(params []queryutil.Param) ([]*transactiondomain.TransactionStatus, error)
+type KontrabonRepo interface {
+	Find(params []queryutil.Param) ([]*kontrabondomain.Kontrabon, error)
+	FindTransaction(params []queryutil.Param) ([]*transactiondomain.TransactionStatus, error)
+	Create(entity kontrabondomain.Kontrabon, transactionIds []string) error
+	Update(kontrabonId string, transactionIds []string, status string) error
+	CreateTx(entity kontrabondomain.Kontrabon, transactionIds []string, tx *gorm.DB)
+	UpdateLunas(kontrabonId string) error
 }
 
 type Repo struct {
@@ -30,7 +30,14 @@ func New() *Repo {
 	return repo
 }
 
-func (r *Repo) Find(params []queryutil.Param) ([]*transactiondomain.Transaction, error) {
+func (r *Repo) Find(params []queryutil.Param) ([]*kontrabondomain.Kontrabon, error) {
+	params = append(params, queryutil.Param{
+		Logic:    "AND",
+		Field:    "td.latest",
+		Operator: "=",
+		Value:    "TRUE",
+	})
+
 	where := ""
 	var values []interface{}
 	for _, param := range params {
@@ -49,38 +56,32 @@ func (r *Repo) Find(params []queryutil.Param) ([]*transactiondomain.Transaction,
 		where = "WHERE " + where
 	}
 
-	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT t.id, t.code, t.date, t.stakeholder_id, t.transaction_type, t.status, "+
-		"u.unit_id, td.product_id, td.buy_price, td.sell_price, td.quantity, td.buy_quantity "+
-		"FROM transaction t "+
-		"JOIN transaction_detail td ON (td.transaction_id = t.id) "+
-		"JOIN product p ON (p.id = td.product_id) "+
-		"JOIN unit u ON (u.id = p.unit_id) "+
-		"%s ORDER BY t.date DESC", where), values...).Rows()
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT k.id, k.code, k.created_time, k.status, SUM(td.sell_price), customer_id "+
+		"FROM public.kontrabon k "+
+		"JOIN public.kontrabon_transaction kt ON (kt.kontrabon_id = k.id) "+
+		"JOIN public.transaction t ON (t.id = kt.transaction_id) "+
+		"JOIN public.transaction_detail td ON (td.transaction_id = t.id)"+
+		"%s GROUP BY k.id, k.code, k.created_time, k.status ORDER BY k.created_time DESC, k.code DESC", where), values...).Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err
 	}
 	defer rows.Close()
 
-	var entities []*transactiondomain.Transaction
-	entityMap := make(map[string]*transactiondomain.Transaction)
+	var entities []*kontrabondomain.Kontrabon
+	entityMap := make(map[string]*kontrabondomain.Kontrabon)
 	for rows.Next() {
+
 		var ID sql.NullString
 		var Code sql.NullString
-		var Date time.Time
-		var StakeholderID sql.NullString
-		var TransactionType sql.NullString
+		var CreatedTime time.Time
 		var Status sql.NullString
-		var UnitID sql.NullString
-		var ProductID sql.NullString
-		var BuyPrice sql.NullFloat64
-		var SellPrice sql.NullFloat64
-		var Quantity sql.NullInt64
-		var BuyQuantity sql.NullInt64
+		var Total sql.NullInt64
+		var CustomerID sql.NullString
 
-		rows.Scan(&ID, &Code, &Date, &StakeholderID, &TransactionType, &Status, &UnitID, &ProductID, &BuyPrice, &SellPrice, &Quantity, &BuyQuantity)
+		rows.Scan(&ID, &Code, &CreatedTime, &Status, &Total, &CustomerID)
 
-		var entity *transactiondomain.Transaction
+		var entity *kontrabondomain.Kontrabon
 		if !ID.Valid && ID.String == "" {
 			return nil, nil
 		}
@@ -88,35 +89,23 @@ func (r *Repo) Find(params []queryutil.Param) ([]*transactiondomain.Transaction,
 		if value, ok := entityMap[ID.String]; ok {
 			entity = value
 		} else {
-			entity = &transactiondomain.Transaction{}
+			entity = &kontrabondomain.Kontrabon{}
 			entity.ID = ID.String
 			entity.Code = Code.String
-			entity.Date = Date.Format("2006-0102")
-			entity.StakeholderID = StakeholderID.String
-			entity.TransactionType = TransactionType.String
+			entity.CreatedTime = CreatedTime.Format(dateutil.DateFormat())
 			entity.Status = Status.String
+			entity.Total = Total.Int64
+			entity.CustomerID = CustomerID.String
 
 			entities = append(entities, entity)
-			entityMap[ID.String] = entity
 		}
-
-		detail := &transactiondomain.TransactionDetail{}
-		detail.TransactionID = entity.ID
-		detail.UnitID = UnitID.String
-		detail.ProductID = ProductID.String
-		detail.BuyPrice = BuyPrice.Float64
-		detail.SellPrice = SellPrice.Float64
-		detail.Quantity = Quantity.Int64
-		detail.BuyQuantity = BuyQuantity.Int64
-
-		entity.TransactionDetail = append(entity.TransactionDetail, detail)
 
 	}
 
 	return entities, nil
 }
 
-func (r *Repo) FindSells(params []queryutil.Param) ([]*transactiondomain.TransactionStatus, error) {
+func (r *Repo) FindTransaction(params []queryutil.Param) ([]*transactiondomain.TransactionStatus, error) {
 	where := ""
 	var values []interface{}
 	for _, param := range params {
@@ -137,8 +126,9 @@ func (r *Repo) FindSells(params []queryutil.Param) ([]*transactiondomain.Transac
 
 	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT t.id, t.code, t.date, t.stakeholder_id, c.code, c.name, t.transaction_type, t.status, "+
 		"t.reference_code, t.web_user_id, w.name, t.created_time, "+
-		"u.id, u.code, td.product_id, p.code, p.name, td.buy_price, td.sell_price, td.quantity, td.buy_quantity "+
+		"u.id, u.code, td.product_id, p.code, p.name, td.buy_price, td.sell_price, td.quantity "+
 		"FROM transaction t "+
+		"LEFT JOIN kontrabon_transaction kt ON (kt.transaction_id = t.id) "+
 		"JOIN transaction_detail td ON (td.transaction_id = t.id) "+
 		"JOIN customer c ON (c.id = t.stakeholder_id) "+
 		"JOIN web_user w ON (w.id = t.web_user_id) "+
@@ -174,10 +164,9 @@ func (r *Repo) FindSells(params []queryutil.Param) ([]*transactiondomain.Transac
 		var BuyPrice sql.NullFloat64
 		var SellPrice sql.NullFloat64
 		var Quantity sql.NullInt64
-		var BuyQuantity sql.NullInt64
 
 		rows.Scan(&ID, &Code, &Date, &StakeholderID, &CustomerCode, &CustomerName, &TransactionType, &Status, &ReferenceCode,
-			&UserId, &UserName, &CreatedTime, &UnitID, &UnitCode, &ProductID, &ProductCode, &ProductName, &BuyPrice, &SellPrice, &Quantity, &BuyQuantity)
+			&UserId, &UserName, &CreatedTime, &UnitID, &UnitCode, &ProductID, &ProductCode, &ProductName, &BuyPrice, &SellPrice, &Quantity)
 
 		var entity *transactiondomain.TransactionStatus
 		if !ID.Valid && ID.String == "" {
@@ -217,7 +206,6 @@ func (r *Repo) FindSells(params []queryutil.Param) ([]*transactiondomain.Transac
 		detail.BuyPrice = BuyPrice.Float64
 		detail.SellPrice = SellPrice.Float64
 		detail.Quantity = Quantity.Int64
-		detail.BuyQuantity = BuyQuantity.Int64
 
 		entity.TransactionDetail = append(entity.TransactionDetail, detail)
 
@@ -226,44 +214,55 @@ func (r *Repo) FindSells(params []queryutil.Param) ([]*transactiondomain.Transac
 	return entities, nil
 }
 
-func (r *Repo) Create(entity *transactiondomain.Transaction, tx *gorm.DB) {
-	tx.Exec("INSERT INTO public.transaction(id, code, date, stakeholder_id, transaction_type, status, reference_code, web_user_id, created_time) "+
-		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
-		entity.ID, entity.Code, entity.Date, entity.StakeholderID, entity.TransactionType, entity.Status, entity.ReferenceCode, entity.UserId, entity.CreatedTime)
-
-	if tx.Error != nil {
-		return
-	}
-
-	for _, detail := range entity.TransactionDetail {
-		txDetailId := stringutil.GenerateUUID()
-		detail.ID = txDetailId
-		tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity) "+
-			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-			txDetailId, entity.ID, detail.ProductID, detail.BuyPrice, detail.SellPrice, detail.Quantity, entity.CreatedTime, entity.UserId, true, detail.Quantity)
-
-		if tx.Error != nil {
-			return
-		}
-	}
-
-}
-
-func (r *Repo) Edit(entity *transactiondomain.Transaction) error {
+func (r *Repo) Create(entity kontrabondomain.Kontrabon, transactionIds []string) error {
 	tx := global.DBCON.Begin()
-
-	tx.Exec("UPDATE public.transaction "+
-		"SET status=? WHERE id=?;", entity.Status, entity.ID)
+	 r.CreateTx(entity, transactionIds, tx)
 
 	if tx.Error != nil {
 		return tx.Error
 	}
 
-	for _, detail := range entity.TransactionDetail {
-		tx.Exec("UPDATE public.transaction_detail "+
-			"SET buy_price=?, sell_price=?, quantity=?, buy_quantity=? WHERE transaction_id=?, product_id=?;",
-			detail.BuyPrice, detail.SellPrice, detail.Quantity, detail.BuyQuantity, detail.TransactionID, detail.ProductID)
+	tx.Commit()
+	return nil
+}
 
+func (r *Repo) CreateTx(entity kontrabondomain.Kontrabon, transactionIds []string, tx *gorm.DB) {
+	tx.Exec("INSERT INTO public.kontrabon(id, code, created_time, status, customer_id) VALUES (?, ?, ?, ?, ?)", entity.ID, entity.Code, entity.CreatedTime, entity.Status, entity.CustomerID)
+	if tx.Error != nil {
+		return
+	}
+
+	for _, transactionId := range transactionIds {
+		tx.Exec("INSERT INTO public.kontrabon_transaction(kontrabon_id, transaction_id) VALUES (?, ?);", entity.ID, transactionId)
+		if tx.Error != nil {
+			return
+		}
+		tx.Exec("UPDATE public.transaction SET status=? WHERE id=?;", transactiondomain.TRANSACTION_KONTRABON, transactionId)
+		if tx.Error != nil {
+			return
+		}
+	}
+}
+
+func (r *Repo) Update(kontrabonId string, transactionIds []string, status string) error {
+	tx := global.DBCON.Begin()
+
+	for _, transactionId := range transactionIds {
+		if status == transactiondomain.TRANSACTION_KONTRABON {
+			tx.Exec("INSERT INTO public.kontrabon_transaction(kontrabon_id, transaction_id) VALUES (?, ?);", kontrabonId, transactionId)
+			if tx.Error != nil {
+				tx.Rollback()
+				return tx.Error
+			}
+		} else if status == transactiondomain.TRANSACTION_STATUS_PEMBUATAN {
+			tx.Exec("DELETE FROM public.kontrabon_transaction WHERE kontrabon_id=? AND transaction_id=?;", kontrabonId, transactionId)
+			if tx.Error != nil {
+				tx.Rollback()
+				return tx.Error
+			}
+		}
+
+		tx.Exec("UPDATE public.transaction SET status=? WHERE id=?;", status, transactionId)
 		if tx.Error != nil {
 			tx.Rollback()
 			return tx.Error
@@ -271,16 +270,23 @@ func (r *Repo) Edit(entity *transactiondomain.Transaction) error {
 	}
 
 	tx.Commit()
-	return tx.Error
+	return nil
 }
 
-func (r *Repo) UpdateStatus(transactionID, status string) error {
-	return global.DBCON.Exec("UPDATE public.transaction "+
-		"SET status=? WHERE id=?;", status, transactionID).Error
-}
+func (r *Repo) UpdateLunas(kontrabonId string) error {
+	tx := global.DBCON.Begin()
 
-func (r *Repo) UpdatePrice(transactionID, productID string, buyPrice, sellPrice float64, quantity, buyQuantity int64) error {
-	return global.DBCON.Exec("UPDATE public.transaction_detail "+
-		"SET buy_price=?, sell_price=?, quantity=?, buy_quantity=? WHERE transaction_id=?, product_id=?;",
-		buyPrice, sellPrice, quantity, buyQuantity, transactionID, productID).Error
+	tx.Exec("UPDATE public.kontrabon SET status=? WHERE id=?", kontrabondomain.STATUS_LUNAS, kontrabonId)
+	if tx.Error != nil{
+		return tx.Error
+	}
+
+	tx.Exec("UPDATE public.transaction SET status=? WHERE id IN (SELECT kt.transaction_id FROM kontrabon_transaction kt WHERE kt.kontrabon_id = ?)", transactiondomain.TRANSACTION_DIBAYAR, kontrabonId)
+	if tx.Error != nil{
+		tx.Rollback()
+		return tx.Error
+	}
+
+	tx.Commit()
+	return nil
 }

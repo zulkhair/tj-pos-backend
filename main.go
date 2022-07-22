@@ -31,7 +31,7 @@ func main() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 
 	// set up database
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", cfg.Database.Host, cfg.Database.User, cfg.Database.Password, cfg.Database.DBName, cfg.Database.Port)
+	dsn := fmt.Sprintf("host=%s user=%s dbname=%s port=%s sslmode=disable", cfg.Database.Host, cfg.Database.User, cfg.Database.DBName, cfg.Database.Port)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		logrus.Fatal(err)

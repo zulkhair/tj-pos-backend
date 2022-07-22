@@ -8,6 +8,7 @@ import (
 	queryutil "dromatech/pos-backend/internal/util/query"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -17,8 +18,10 @@ type CustomerRepo interface {
 	Edit(product *customerdomain.Customer) error
 	GetSellPrice(params []queryutil.Param) ([]*customerdomain.SellPriceResponse, error)
 	UpdateSellPrice(request customerdomain.SellPriceRequest) error
-	DeleteSellPrice(supplierId, unitId, date string) error
+	DeleteSellPrice(customerId, date string) error
 	AddSellPrice(entity customerdomain.AddPriceRequest) error
+	AddSellPriceTx(entity customerdomain.AddPriceRequest, tx *gorm.DB)
+	FindSellPrice(params []queryutil.Param) ([]*customerdomain.PriceResponse, error)
 }
 
 type Repo struct {
@@ -165,8 +168,8 @@ func (r *Repo) UpdateSellPrice(request customerdomain.SellPriceRequest) error {
 	tx := global.DBCON.Begin()
 
 	for _, detail := range request.Prices {
-		tx.Exec("INSERT INTO public.sell_price(date, customer_id, unit_id, product_id, price) "+
-			"VALUES (?, ?, ?, ?, ?)", request.Date, request.CustomerId, request.UnitId, detail.ProductID, detail.Price)
+		tx.Exec("INSERT INTO public.sell_price(date, customer_id, product_id, price) "+
+			"VALUES (?, ?, ?, ?, ?)", request.Date, request.CustomerId, detail.ProductID, detail.Price)
 
 		if tx.Error != nil {
 			tx.Rollback()
@@ -177,9 +180,9 @@ func (r *Repo) UpdateSellPrice(request customerdomain.SellPriceRequest) error {
 	return tx.Error
 }
 
-func (r *Repo) DeleteSellPrice(customerId, unitId, date string) error {
-	tx := global.DBCON.Exec("DELETE from public.sell_price WHERE customer_id = ? AND unit_id = ? AND date = ? ",
-		customerId, unitId, date)
+func (r *Repo) DeleteSellPrice(customerId, date string) error {
+	tx := global.DBCON.Exec("DELETE from public.sell_price WHERE customer_id = ? AND date = ? ",
+		customerId, date)
 
 	return tx.Error
 }
@@ -189,14 +192,14 @@ func (r *Repo) AddSellPrice(entity customerdomain.AddPriceRequest) error {
 	tx := global.DBCON.Begin()
 
 	tx.Exec("UPDATE public.sell_price SET latest=FALSE "+
-		"WHERE customer_id = ? AND unit_id = ? AND product_id = ? AND latest=TRUE;", entity.CustomerId, entity.UnitId, entity.ProductID)
+		"WHERE customer_id = ? AND product_id = ? AND latest=TRUE;", entity.CustomerId, entity.ProductID)
 
 	if tx.Error != nil {
 		return tx.Error
 	}
 
-	tx.Exec("INSERT INTO public.sell_price(id, date, customer_id, unit_id, product_id, price, web_user_id, latest) "+
-		"VALUES (?, ?, ?, ?, ?, ?, ?, ?)", entity.ID, entity.Date, entity.CustomerId, entity.UnitId, entity.ProductID, entity.Price, entity.WebUserId, entity.Latest)
+	tx.Exec("INSERT INTO public.sell_price(id, date, customer_id, product_id, price, web_user_id, latest, transaction_id) "+
+		"VALUES (?, ?, ?, ?, ?, ?, ?, ?)", entity.ID, entity.Date, entity.CustomerId, entity.ProductID, entity.Price, entity.WebUserId, entity.Latest, entity.TransactionId)
 
 	if tx.Error != nil {
 		tx.Rollback()
@@ -205,6 +208,19 @@ func (r *Repo) AddSellPrice(entity customerdomain.AddPriceRequest) error {
 
 	tx.Commit()
 	return nil
+
+}
+
+func (r *Repo) AddSellPriceTx(entity customerdomain.AddPriceRequest, tx *gorm.DB) {
+	tx.Exec("UPDATE public.sell_price SET latest=FALSE "+
+		"WHERE customer_id = ? AND product_id = ? AND latest=TRUE;", entity.CustomerId, entity.ProductID)
+
+	if tx.Error != nil {
+		return
+	}
+
+	tx.Exec("INSERT INTO public.sell_price(id, date, customer_id, product_id, price, web_user_id, latest, transaction_id) "+
+		"VALUES (?, ?, ?, ?, ?, ?, ?, ?)", entity.ID, entity.Date, entity.CustomerId, entity.ProductID, entity.Price, entity.WebUserId, entity.Latest, entity.TransactionId)
 }
 
 func (r *Repo) FindSellPrice(params []queryutil.Param) ([]*customerdomain.PriceResponse, error) {
@@ -226,9 +242,12 @@ func (r *Repo) FindSellPrice(params []queryutil.Param) ([]*customerdomain.PriceR
 		where = "WHERE " + where
 	}
 
-	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT s.id, s.date, s.customer_id, s.unit_id, s.product_id, s.price, w.username, w.name "+
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT s.id, s.date, s.customer_id, p.unit_id, s.product_id, s.price, w.username, w.name, t.code "+
 		"FROM public.sell_price s "+
 		"JOIN public.web_user w ON (w.id = s.web_user_id) "+
+		"JOIN public.product p ON (p.id = s.product_id) "+
+		"JOIN public.unit u ON (u.id = p.unit_id) "+
+		"LEFT JOIN public.transaction t ON (t.id = s.transaction_id) "+
 		"%s ORDER BY date DESC ", where), values...).Rows()
 
 	if err != nil {
@@ -248,22 +267,24 @@ func (r *Repo) FindSellPrice(params []queryutil.Param) ([]*customerdomain.PriceR
 		var Price sql.NullFloat64
 		var WebUsername sql.NullString
 		var WebUserName sql.NullString
+		var TransactionCode sql.NullString
 
-		rows.Scan(&ID, &Date, &CustomerId, &UnitId, &ProductId, &Price, &WebUsername, &WebUserName)
+		rows.Scan(&ID, &Date, &CustomerId, &UnitId, &ProductId, &Price, &WebUsername, &WebUserName, &TransactionCode)
 
 		if !ID.Valid && ID.String == "" {
 			return nil, nil
 		}
 
 		entity := &customerdomain.PriceResponse{
-			ID:          ID.String,
-			Date:        Date.Format(dateutil.TimeFormat()),
-			CustomerId:  CustomerId.String,
-			UnitId:      UnitId.String,
-			ProductID:   ProductId.String,
-			Price:       Price.Float64,
-			WebUsername: WebUsername.String,
-			WebUserName: WebUserName.String,
+			ID:              ID.String,
+			Date:            Date.Format(dateutil.TimeFormat()),
+			CustomerId:      CustomerId.String,
+			UnitId:          UnitId.String,
+			ProductID:       ProductId.String,
+			Price:           Price.Float64,
+			WebUsername:     WebUsername.String,
+			WebUserName:     WebUserName.String,
+			TransactionCode: TransactionCode.String,
 		}
 
 		entities = append(entities, entity)

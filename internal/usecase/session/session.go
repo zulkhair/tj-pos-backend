@@ -4,9 +4,10 @@ import (
 	"crypto/sha256"
 	"dromatech/pos-backend/global"
 	configdomain "dromatech/pos-backend/internal/domain/config"
-	roledomain "dromatech/pos-backend/internal/domain/role"
 	sessiondomain "dromatech/pos-backend/internal/domain/session"
-	webuserdomain "dromatech/pos-backend/internal/domain/webuser"
+	configrepo "dromatech/pos-backend/internal/repo/config"
+	rolerepo "dromatech/pos-backend/internal/repo/role"
+	webuserrepo "dromatech/pos-backend/internal/repo/webuser"
 	"encoding/base64"
 	"fmt"
 	"github.com/google/uuid"
@@ -25,34 +26,12 @@ type SessionUsecase interface {
 
 type Usecase struct {
 	sessionCache sessiondomain.SessionCache
-	configRepo   configRepo
-	webuserrepo  webUserRepo
-	roleRepo     roleRepo
+	configRepo   configrepo.ConfigRepo
+	webuserrepo  webuserrepo.WebUserRepo
+	roleRepo     rolerepo.RoleRepo
 }
 
-type configRepo interface {
-	ReInitCache() error
-	GetValue(key string) string
-}
-
-type webUserRepo interface {
-	FindAll() ([]*webuserdomain.WebUser, error)
-	Find(id string) *webuserdomain.WebUser
-	FindByUsername(username string) *webuserdomain.WebUser
-	EditUser(*webuserdomain.WebUser)
-	ChangePassword(userId string, newPassword string)
-	RegisterUser(webUser *webuserdomain.WebUser)
-}
-
-type roleRepo interface {
-	Find(id string) *roledomain.Role
-	FindMenu(roleId string) ([]*sessiondomain.Menu, error)
-	FindAll() ([]*roledomain.Role, error)
-	FindActive() ([]*roledomain.RoleResponseModel, error)
-	FindActivePermissionPaths(roleId string) ([]string, error)
-}
-
-func New(configRepo configRepo, webuserrepo webUserRepo, roleRepo roleRepo) *Usecase {
+func New(configRepo configrepo.ConfigRepo, webuserrepo webuserrepo.WebUserRepo, roleRepo rolerepo.RoleRepo) *Usecase {
 	sessionCache := sessiondomain.SessionCache{
 		DataMap: make(map[string]*sessiondomain.Session),
 	}

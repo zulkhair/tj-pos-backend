@@ -47,7 +47,7 @@ func (r *Repo) NextValTx(id string, tx *gorm.DB) int64 {
 
 	if nextVal == 1 {
 		tx.Exec("INSERT INTO public.sequence(id, next_value) VALUES (?, ?);", id, 2)
-		return int64(2)
+		return nextVal
 	} else {
 		tx.Exec("UPDATE public.sequence SET next_value=? WHERE id=?;", nextVal+1, id)
 		return nextVal

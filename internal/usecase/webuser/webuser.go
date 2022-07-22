@@ -6,12 +6,14 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type SessionUsecase interface {
-	EditUser(userId, name string)
+	EditUser(userId, name, username, role, status string) error
 	ChangePassword(userId, password1, password2 string) error
 	RegisterUser(creatorId, name, username, password, roleId string) error
 	FindAllUser() ([]*webuserdomain.WebUser, error)
@@ -27,7 +29,7 @@ type webUserRepo interface {
 	FindAll() ([]*webuserdomain.WebUser, error)
 	Find(id string) *webuserdomain.WebUser
 	FindByUsername(username string) *webuserdomain.WebUser
-	EditUser(*webuserdomain.WebUser)
+	EditUser(webUser *webuserdomain.WebUser) error
 	ChangePassword(userId string, newPassword string)
 	RegisterUser(webUser *webuserdomain.WebUser)
 	ChangeStatus(userId string, active bool)
@@ -41,11 +43,34 @@ func New(webuserrepo webUserRepo) *Usecase {
 	return uc
 }
 
-func (uc *Usecase) EditUser(userId, name string) {
+func (uc *Usecase) EditUser(userId, name, username, role, status string) error {
 	webuser := uc.webuserrepo.Find(userId)
-	webuser.Name = name
+	if name != "" {
+		webuser.Name = name
+	}
+	if username != "" {
+		u := uc.webuserrepo.FindByUsername(username)
+		if u != nil{
+			return fmt.Errorf("User dengan username '&s' sudah ada", username)
+		}
+		webuser.Username = username
+	}
+	if role != "" {
+		webuser.RoleId = role
+	}
+	if status != "" {
+		ac, err := strconv.ParseBool(status)
+		if err != nil {
+			webuser.Active = ac
+		}
+	}
 
-	uc.webuserrepo.EditUser(webuser)
+	err := uc.webuserrepo.EditUser(webuser)
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan perubahan data user")
+	}
+	return nil
 }
 
 func (uc *Usecase) ChangePassword(userId, password1, password2 string) error {

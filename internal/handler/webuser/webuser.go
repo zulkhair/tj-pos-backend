@@ -12,7 +12,7 @@ import (
 )
 
 type webuserUsecase interface {
-	EditUser(userId, name string)
+	EditUser(userId, name, username, role, status string) error
 	ChangePassword(userId, password1, password2 string) error
 	RegisterUser(creatorId, name, username, password, roleId string) error
 	FindAllUser() ([]*webuserdomain.WebUser, error)
@@ -31,7 +31,7 @@ func New(webuserUsecase webuserUsecase) *Handler {
 	}
 }
 
-func (h *Handler) EditUser(c *gin.Context) {
+func (h *Handler) EditName(c *gin.Context) {
 	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		c.AbortWithError(400, fmt.Errorf("bad request"))
@@ -44,8 +44,28 @@ func (h *Handler) EditUser(c *gin.Context) {
 	}
 
 	session := restutil.GetSession(c)
-	h.webuserUsecase.EditUser(session.UserID, name.String())
+	h.webuserUsecase.EditUser(session.UserID, name.String(), "", "", "")
 	restutil.SendResponseOk(c, "Nama berhasil diubah", nil)
+}
+
+func (h *Handler) EditUser(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+	}
+
+	userId := gjson.Get(string(jsonData), "userId")
+	name := gjson.Get(string(jsonData), "name")
+	username := gjson.Get(string(jsonData), "username")
+	role := gjson.Get(string(jsonData), "role")
+	active := gjson.Get(string(jsonData), "active")
+
+	err = h.webuserUsecase.EditUser(userId.String(), name.String(), username.String(), role.String(), active.String())
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+	restutil.SendResponseOk(c, "Data berhasil diubah", nil)
 }
 
 func (h *Handler) ChangePassword(c *gin.Context) {

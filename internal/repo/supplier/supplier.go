@@ -8,6 +8,7 @@ import (
 	queryutil "dromatech/pos-backend/internal/util/query"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -20,6 +21,7 @@ type SupplierRepo interface {
 	DeleteBuyPrice(supplierId, unitId, date string) error
 	AddBuyPrice(entity supplierdomain.AddPriceRequest) error
 	FindBuyPrice(params []queryutil.Param) ([]*supplierdomain.PriceResponse, error)
+	AddBuyPriceTx(entity supplierdomain.AddPriceRequest, tx *gorm.DB)
 }
 
 type Repo struct {
@@ -166,8 +168,8 @@ func (r *Repo) UpdateBuyPrice(request supplierdomain.BuyPriceRequest) error {
 	tx := global.DBCON.Begin()
 
 	for _, detail := range request.Prices {
-		tx.Exec("INSERT INTO public.buy_price(date, supplier_id, unit_id, product_id, price) "+
-			"VALUES (?, ?, ?, ?, ?)", request.Date, request.SupplierId, request.UnitId, detail.ProductID, detail.Price)
+		tx.Exec("INSERT INTO public.buy_price(date, supplier_id, product_id, price) "+
+			"VALUES (?, ?, ?, ?, ?)", request.Date, request.SupplierId, detail.ProductID, detail.Price)
 
 		if tx.Error != nil {
 			tx.Rollback()
@@ -179,7 +181,7 @@ func (r *Repo) UpdateBuyPrice(request supplierdomain.BuyPriceRequest) error {
 }
 
 func (r *Repo) DeleteBuyPrice(supplierId, unitId, date string) error {
-	tx := global.DBCON.Exec("DELETE from public.buy_price WHERE supplier_id = ? AND unit_id = ? AND date = ? ",
+	tx := global.DBCON.Exec("DELETE from public.buy_price WHERE supplier_id = ? AND date = ? ",
 		supplierId, unitId, date)
 
 	return tx.Error
@@ -190,14 +192,14 @@ func (r *Repo) AddBuyPrice(entity supplierdomain.AddPriceRequest) error {
 	tx := global.DBCON.Begin()
 
 	tx.Exec("UPDATE public.buy_price SET latest=FALSE "+
-		"WHERE unit_id = ? AND product_id = ? AND latest=TRUE;", entity.UnitId, entity.ProductID)
+		"WHERE product_id = ? AND latest=TRUE;", entity.ProductID)
 
 	if tx.Error != nil {
 		return tx.Error
 	}
 
-	tx.Exec("INSERT INTO public.buy_price(id, date, unit_id, product_id, price, web_user_id, latest) "+
-		"VALUES (?, ?, ?, ?, ?, ?, ?)", entity.ID, entity.Date, entity.UnitId, entity.ProductID, entity.Price, entity.WebUserId, entity.Latest)
+	tx.Exec("INSERT INTO public.buy_price(id, date, product_id, price, web_user_id, latest, transaction_id) "+
+		"VALUES (?, ?, ?, ?, ?, ?, ?)", entity.ID, entity.Date, entity.ProductID, entity.Price, entity.WebUserId, entity.Latest, entity.TransactionId)
 
 	if tx.Error != nil {
 		tx.Rollback()
@@ -206,6 +208,18 @@ func (r *Repo) AddBuyPrice(entity supplierdomain.AddPriceRequest) error {
 
 	tx.Commit()
 	return nil
+}
+
+func (r *Repo) AddBuyPriceTx(entity supplierdomain.AddPriceRequest, tx *gorm.DB) {
+	tx.Exec("UPDATE public.buy_price SET latest=FALSE "+
+		"WHERE product_id = ? AND latest=TRUE;", entity.UnitId, entity.ProductID)
+
+	if tx.Error != nil {
+		return
+	}
+
+	tx.Exec("INSERT INTO public.buy_price(id, date, product_id, price, web_user_id, latest, transaction_id) "+
+		"VALUES (?, ?, ?, ?, ?, ?, ?)", entity.ID, entity.Date, entity.ProductID, entity.Price, entity.WebUserId, entity.Latest, entity.TransactionId)
 }
 
 func (r *Repo) FindBuyPrice(params []queryutil.Param) ([]*supplierdomain.PriceResponse, error) {
@@ -227,9 +241,12 @@ func (r *Repo) FindBuyPrice(params []queryutil.Param) ([]*supplierdomain.PriceRe
 		where = "WHERE " + where
 	}
 
-	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT s.id, s.date, s.supplier_id, s.unit_id, s.product_id, s.price, w.username, w.name "+
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT s.id, s.date, s.supplier_id, p.unit_id, s.product_id, s.price, w.username, w.name, t.code "+
 		"FROM public.buy_price s "+
-		"JOIN public.web_user w ON (w.id = s.web_user_id) "+
+		"JOIN public.web_user w ON (w.id = s.web_user_id) " +
+		"JOIN public.product p ON (p.id = s.product_id) " +
+		"JOIN public.unit u ON (u.id = p.unit_id) " +
+		"LEFT JOIN public.transaction t ON (t.id = s.transaction_id) "+
 		"%s ORDER BY date DESC ", where), values...).Rows()
 
 	if err != nil {
@@ -249,22 +266,24 @@ func (r *Repo) FindBuyPrice(params []queryutil.Param) ([]*supplierdomain.PriceRe
 		var Price sql.NullFloat64
 		var WebUsername sql.NullString
 		var WebUserName sql.NullString
+		var TransactionCode sql.NullString
 
-		rows.Scan(&ID, &Date, &SupplierId, &UnitId, &ProductId, &Price, &WebUsername, &WebUserName)
+		rows.Scan(&ID, &Date, &SupplierId, &UnitId, &ProductId, &Price, &WebUsername, &WebUserName, &TransactionCode)
 
 		if !ID.Valid && ID.String == "" {
 			return nil, nil
 		}
 
 		entity := &supplierdomain.PriceResponse{
-			ID:          ID.String,
-			Date:        Date.Format(dateutil.TimeFormat()),
-			SupplierId:  SupplierId.String,
-			UnitId:      UnitId.String,
-			ProductID:   ProductId.String,
-			Price:       Price.Float64,
-			WebUsername: WebUsername.String,
-			WebUserName: WebUserName.String,
+			ID:              ID.String,
+			Date:            Date.Format(dateutil.TimeFormat()),
+			SupplierId:      SupplierId.String,
+			UnitId:          UnitId.String,
+			ProductID:       ProductId.String,
+			Price:           Price.Float64,
+			WebUsername:     WebUsername.String,
+			WebUserName:     WebUserName.String,
+			TransactionCode: TransactionCode.String,
 		}
 
 		entities = append(entities, entity)

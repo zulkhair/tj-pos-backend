@@ -2,6 +2,7 @@ package productusecase
 
 import (
 	productdomain "dromatech/pos-backend/internal/domain/product"
+	productrepo "dromatech/pos-backend/internal/repo/product"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -9,22 +10,16 @@ import (
 )
 
 type ProductUsecase interface {
-	Find(id, code, name string) ([]*productdomain.Product, error)
-	Create(code, name, description string) error
+	Find(id, code, name string, active *bool) ([]*productdomain.Product, error)
+	Create(code, name, description, unitId string) error
 	Edit(id, code, name, description string, active bool) error
 }
 
 type Usecase struct {
-	productRepo productRepo
+	productRepo productrepo.ProductRepo
 }
 
-type productRepo interface {
-	Find(params map[string]interface{}) ([]*productdomain.Product, error)
-	Create(product *productdomain.Product) error
-	Edit(product *productdomain.Product) error
-}
-
-func New(productRepo productRepo) *Usecase {
+func New(productRepo productrepo.ProductRepo) *Usecase {
 	uc := &Usecase{
 		productRepo: productRepo,
 	}
@@ -32,22 +27,25 @@ func New(productRepo productRepo) *Usecase {
 	return uc
 }
 
-func (uc *Usecase) Find(id, code, name string) ([]*productdomain.Product, error) {
+func (uc *Usecase) Find(id, code, name string, active *bool) ([]*productdomain.Product, error) {
 	param := make(map[string]interface{})
 	if id != "" {
-		param["id"] = id
+		param["p.id"] = id
 	}
 	if code != "" {
-		param["code"] = code
+		param["p.code"] = code
 	}
 	if name != "" {
-		param["name"] = name
+		param["p.name"] = name
+	}
+	if active != nil {
+		param["p.active"] = *active
 	}
 	return uc.productRepo.Find(param)
 }
 
-func (uc *Usecase) Create(code, name, description string) error {
-	products, err := uc.productRepo.Find(map[string]interface{}{"code": code})
+func (uc *Usecase) Create(code, name, description, unitId string) error {
+	products, err := uc.productRepo.Find(map[string]interface{}{"p.code": code})
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan penambahan data produk")
@@ -65,6 +63,7 @@ func (uc *Usecase) Create(code, name, description string) error {
 		Name:        name,
 		Description: description,
 		Active:      true,
+		UnitID:      unitId,
 	}
 
 	err = uc.productRepo.Create(product)
@@ -77,7 +76,7 @@ func (uc *Usecase) Create(code, name, description string) error {
 }
 
 func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
-	products, err := uc.productRepo.Find(map[string]interface{}{"id": id})
+	products, err := uc.productRepo.Find(map[string]interface{}{"p.id": id})
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data produk")
@@ -91,7 +90,7 @@ func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 	product := products[0]
 
 	if code != product.Code {
-		products, err := uc.productRepo.Find(map[string]interface{}{"code": code})
+		products, err := uc.productRepo.Find(map[string]interface{}{"p.code": code})
 		if err != nil {
 			logrus.Error(err.Error())
 			return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data produk")

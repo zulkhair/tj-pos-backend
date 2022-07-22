@@ -4,7 +4,9 @@ import (
 	"dromatech/pos-backend/global"
 	configdomain "dromatech/pos-backend/internal/domain/config"
 	customerhandler "dromatech/pos-backend/internal/handler/customer"
+	kontrabonhandler "dromatech/pos-backend/internal/handler/kontrabon"
 	pinghandler "dromatech/pos-backend/internal/handler/ping"
+	pricehandler "dromatech/pos-backend/internal/handler/price"
 	producthandler "dromatech/pos-backend/internal/handler/product"
 	rolehandler "dromatech/pos-backend/internal/handler/role"
 	sessionhandler "dromatech/pos-backend/internal/handler/session"
@@ -14,6 +16,8 @@ import (
 	webuserhandler "dromatech/pos-backend/internal/handler/webuser"
 	configrepo "dromatech/pos-backend/internal/repo/config"
 	customerrepo "dromatech/pos-backend/internal/repo/customer"
+	kontrabonrepo "dromatech/pos-backend/internal/repo/kontrabon"
+	pricerepo "dromatech/pos-backend/internal/repo/price"
 	productrepo "dromatech/pos-backend/internal/repo/product"
 	rolerepo "dromatech/pos-backend/internal/repo/role"
 	sequencerepo "dromatech/pos-backend/internal/repo/sequence"
@@ -22,6 +26,8 @@ import (
 	unitrepo "dromatech/pos-backend/internal/repo/unit"
 	webuserrepo "dromatech/pos-backend/internal/repo/webuser"
 	customerusecase "dromatech/pos-backend/internal/usecase/customer"
+	kontrabonusecase "dromatech/pos-backend/internal/usecase/kontrabon"
+	priceusecase "dromatech/pos-backend/internal/usecase/price"
 	productusecase "dromatech/pos-backend/internal/usecase/product"
 	roleusecase "dromatech/pos-backend/internal/usecase/role"
 	sessionusecase "dromatech/pos-backend/internal/usecase/session"
@@ -43,6 +49,8 @@ type AppHandler struct {
 	customerHandler    *customerhandler.Handler
 	unitHandler        *unithandler.Handler
 	transactionHandler *transactionhandler.Handler
+	kontrabonHandler   *kontrabonhandler.Handler
+	priceHandler       *pricehandler.Handler
 }
 
 func StartApp() error {
@@ -69,6 +77,8 @@ func StartApp() error {
 	unitRepo := unitrepo.New()
 	sequenceRepo := sequencerepo.New()
 	transactionRepo := transactionrepo.New()
+	kontrabonRepo := kontrabonrepo.New()
+	priceRepo := pricerepo.New()
 
 	// init usecase
 	sessionUsecase := sessionusecase.New(configRepo, webuserRepo, roleRepo)
@@ -79,6 +89,8 @@ func StartApp() error {
 	custmerUsecase := customerusecase.New(customerRepo)
 	unitUsecase := unitusecase.New(unitRepo)
 	transactionusecase := transactionusecase.New(transactionRepo, sequenceRepo, supplierRepo, customerRepo)
+	kontrabonUseccase := kontrabonusecase.New(kontrabonRepo, sequenceRepo, customerRepo)
+	priceUsecase := priceusecase.New(priceRepo, productRepo, customerRepo)
 
 	// init Handler
 	pingHandler := pinghandler.New()
@@ -90,6 +102,8 @@ func StartApp() error {
 	customerHandler := customerhandler.New(custmerUsecase)
 	unitHandler := unithandler.New(unitUsecase)
 	transactionHandler := transactionhandler.New(transactionusecase)
+	kontrabonHandler := kontrabonhandler.New(kontrabonUseccase)
+	priceHandler := pricehandler.New(priceUsecase)
 
 	appHandler := AppHandler{
 		pingHandler:        pingHandler,
@@ -101,6 +115,8 @@ func StartApp() error {
 		customerHandler:    customerHandler,
 		unitHandler:        unitHandler,
 		transactionHandler: transactionHandler,
+		kontrabonHandler:   kontrabonHandler,
+		priceHandler:       priceHandler,
 	}
 
 	router := newRoutes(appHandler)

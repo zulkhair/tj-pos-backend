@@ -37,7 +37,7 @@ func (r *Repo) Find(params map[string]interface{}) ([]*productdomain.Product, er
 		where = "WHERE " + where
 	}
 
-	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT id, code, name, description, active FROM product %s ORDER BY code", where), values...).Rows()
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT p.id, p.code, p.name, p.description, p.active, u.id, u.code FROM product p JOIN unit u ON (u.id = p.unit_id) %s ORDER BY p.code", where), values...).Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err
@@ -52,8 +52,10 @@ func (r *Repo) Find(params map[string]interface{}) ([]*productdomain.Product, er
 		var Name sql.NullString
 		var Description sql.NullString
 		var Active sql.NullBool
+		var UnitID sql.NullString
+		var UnitCode sql.NullString
 
-		rows.Scan(&ID, &Code, &Name, &Description, &Active)
+		rows.Scan(&ID, &Code, &Name, &Description, &Active, &UnitID,  &UnitCode)
 
 		product := &productdomain.Product{}
 		if ID.Valid && ID.String != "" {
@@ -78,6 +80,9 @@ func (r *Repo) Find(params map[string]interface{}) ([]*productdomain.Product, er
 			product.Active = Active.Bool
 		}
 
+		product.UnitID = UnitID.String
+		product.UnitCode = UnitCode.String
+
 		products = append(products, product)
 	}
 
@@ -85,13 +90,13 @@ func (r *Repo) Find(params map[string]interface{}) ([]*productdomain.Product, er
 }
 
 func (r *Repo) Create(product *productdomain.Product) error {
-	return global.DBCON.Exec("INSERT INTO public.product(id, code, name, description, active) "+
-		"VALUES (?, ?, ?, ?, ?)",
-		product.ID, product.Code, product.Name, product.Description, product.Active).Error
+	return global.DBCON.Exec("INSERT INTO public.product(id, code, name, description, active, unit_id) "+
+		"VALUES (?, ?, ?, ?, ?, ?)",
+		product.ID, product.Code, product.Name, product.Description, product.Active, product.UnitID).Error
 }
 
 func (r *Repo) Edit(product *productdomain.Product) error {
 	return global.DBCON.Exec("UPDATE public.product "+
-		"SET code=?, name=?, description=?, active=? "+
-		"WHERE id=?;", product.Code, product.Name, product.Description, product.Active, product.ID).Error
+		"SET code=?, name=?, description=?, active=?, unit_id = ? "+
+		"WHERE id=?;", product.Code, product.Name, product.Description, product.Active, product.UnitID, product.ID).Error
 }

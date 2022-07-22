@@ -11,7 +11,7 @@ type WebUserRepo interface {
 	FindAll() ([]*webuserdomain.WebUser, error)
 	Find(id string) *webuserdomain.WebUser
 	FindByUsername(username string) *webuserdomain.WebUser
-	EditUser(*webuserdomain.WebUser)
+	EditUser(webUser *webuserdomain.WebUser) error
 	ChangePassword(userId string, newPassword string)
 	RegisterUser(webUser *webuserdomain.WebUser)
 	ChangeStatus(userId string, active bool)
@@ -218,10 +218,10 @@ func (r *Repo) FindByUsername(username string) *webuserdomain.WebUser {
 	return user
 }
 
-func (r *Repo) EditUser(webUser *webuserdomain.WebUser) {
-	global.DBCON.Exec("UPDATE public.web_user "+
-		"SET name=? "+
-		"WHERE id=?;", webUser.Name, webUser.ID)
+func (r *Repo) EditUser(webUser *webuserdomain.WebUser) error{
+	return global.DBCON.Exec("UPDATE public.web_user "+
+		"SET name=?, username=?, role_id=?, active=? "+
+		"WHERE id=?;", webUser.Name, webUser.Username, webUser.RoleId, webUser.Active, webUser.ID).Error
 }
 
 func (r *Repo) ChangePassword(userId string, newPassword string) {

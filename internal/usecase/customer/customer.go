@@ -13,7 +13,7 @@ import (
 )
 
 type CustmerUsecase interface {
-	Find(id, code, name string) ([]*customerdomain.Customer, error)
+	Find(id, code, name string, active *bool) ([]*customerdomain.Customer, error)
 	Create(code, name, description string) error
 	Edit(id, code, name, description string, active bool) error
 	GetSellPrice(supplierId, unitId, date string) ([]*customerdomain.SellPriceResponse, error)
@@ -30,7 +30,7 @@ type customerRepo interface {
 	Edit(product *customerdomain.Customer) error
 	GetSellPrice(params []queryutil.Param) ([]*customerdomain.SellPriceResponse, error)
 	UpdateSellPrice(request customerdomain.SellPriceRequest) error
-	DeleteSellPrice(supplierId, unitId, date string) error
+	DeleteSellPrice(supplierId, date string) error
 	AddSellPrice(entity customerdomain.AddPriceRequest) error
 	FindSellPrice(params []queryutil.Param) ([]*customerdomain.PriceResponse, error)
 }
@@ -43,7 +43,7 @@ func New(customerRepo customerRepo) *Usecase {
 	return uc
 }
 
-func (uc *Usecase) Find(id, code, name string) ([]*customerdomain.Customer, error) {
+func (uc *Usecase) Find(id, code, name string, active *bool) ([]*customerdomain.Customer, error) {
 	param := make(map[string]interface{})
 	if id != "" {
 		param["id"] = id
@@ -53,6 +53,9 @@ func (uc *Usecase) Find(id, code, name string) ([]*customerdomain.Customer, erro
 	}
 	if name != "" {
 		param["name"] = name
+	}
+	if active != nil {
+		param["active"] = *active
 	}
 	return uc.customerRepo.Find(param)
 }
@@ -179,7 +182,7 @@ func (uc *Usecase) UpdateSellPrice(request customerdomain.SellPriceRequest) erro
 		return fmt.Errorf("Harap pilih satuan")
 	}
 
-	err := uc.customerRepo.DeleteSellPrice(request.CustomerId, request.UnitId, request.Date)
+	err := uc.customerRepo.DeleteSellPrice(request.CustomerId, request.Date)
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan pembaruan data harga")
@@ -198,7 +201,6 @@ func (uc *Usecase) AddSellPrice(entity customerdomain.AddPriceRequest, userId st
 	entity.Date = time.Now().Format(dateutil.TimeFormat())
 	entity.WebUserId = userId
 	entity.Latest = true
-	entity.WebUserId = userId
 
 	err := uc.customerRepo.AddSellPrice(entity)
 	if err != nil {
@@ -222,7 +224,7 @@ func (uc *Usecase) FindSellPrice(customerId, unitId, productId string, latest *b
 	if unitId != "" {
 		param = append(param, queryutil.Param{
 			Logic:    "AND",
-			Field:    "s.unit_id",
+			Field:    "p.unit_id",
 			Operator: "=",
 			Value:    unitId,
 		})

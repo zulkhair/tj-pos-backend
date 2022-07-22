@@ -52,6 +52,20 @@ func (h *Handler) Find(c *gin.Context) {
 	restutil.SendResponseOk(c, "", products)
 }
 
+func (h *Handler) FindActive(c *gin.Context) {
+	id := c.Query("id")
+	code := c.Query("code")
+
+	var activeBool = true
+
+	products, err := h.unitUsecase.Find(id, code, &activeBool)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+	}
+
+	restutil.SendResponseOk(c, "", products)
+}
+
 func (h *Handler) Create(c *gin.Context) {
 	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {

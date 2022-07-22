@@ -201,7 +201,6 @@ func (uc *Usecase) AddBuyPrice(entity supplierdomain.AddPriceRequest, userId str
 	entity.Date = time.Now().Format(dateutil.TimeFormat())
 	entity.WebUserId = userId
 	entity.Latest = true
-	entity.WebUserId = userId
 
 	err := uc.supplierRepo.AddBuyPrice(entity)
 	if err != nil {

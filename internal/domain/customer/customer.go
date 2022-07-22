@@ -15,25 +15,27 @@ type Customer struct {
 }
 
 type AddPriceRequest struct {
-	ID         string  `json:"id"`
-	Date       string  `json:"date"`
-	CustomerId string  `json:"customerId"`
-	UnitId     string  `json:"unitId"`
-	ProductID  string  `json:"productId"`
-	Price      float64 `json:"price"`
-	WebUserId  string  `json:"webUserId"`
-	Latest     bool    `json:"latest"`
+	ID            string  `json:"id"`
+	Date          string  `json:"date"`
+	CustomerId    string  `json:"customerId"`
+	UnitId        string  `json:"unitId"`
+	ProductID     string  `json:"productId"`
+	Price         float64 `json:"price"`
+	WebUserId     string  `json:"webUserId"`
+	Latest        bool    `json:"latest"`
+	TransactionId *string `json:"-"`
 }
 
 type PriceResponse struct {
-	ID          string  `json:"id"`
-	Date        string  `json:"date"`
-	CustomerId  string  `json:"customerId"`
-	UnitId      string  `json:"unitId"`
-	ProductID   string  `json:"productId"`
-	Price       float64 `json:"price"`
-	WebUsername string  `json:"webUsername"`
-	WebUserName string  `json:"webUserName"`
+	ID              string  `json:"id"`
+	Date            string  `json:"date"`
+	CustomerId      string  `json:"customerId"`
+	UnitId          string  `json:"unitId"`
+	ProductID       string  `json:"productId"`
+	Price           float64 `json:"price"`
+	WebUsername     string  `json:"webUsername"`
+	WebUserName     string  `json:"webUserName"`
+	TransactionCode string  `json:"transactionCode"`
 }
 
 type SellPrice struct {

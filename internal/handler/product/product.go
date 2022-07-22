@@ -1,26 +1,22 @@
 package producthandler
 
 import (
-	productdomain "dromatech/pos-backend/internal/domain/product"
+	productusecase "dromatech/pos-backend/internal/usecase/product"
 	restutil "dromatech/pos-backend/internal/util/rest"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
+	"strconv"
 )
-
-type productUsecase interface {
-	Find(id, code, name string) ([]*productdomain.Product, error)
-	Create(code, name, description string) error
-	Edit(id, code, name, description string, active bool) error
-}
 
 // Handler defines the handler
 type Handler struct {
-	productUsecase productUsecase
+	productUsecase productusecase.ProductUsecase
 }
 
-func New(productUsecase productUsecase) *Handler {
+func New(productUsecase productusecase.ProductUsecase) *Handler {
 	return &Handler{
 		productUsecase: productUsecase,
 	}
@@ -30,8 +26,36 @@ func (h *Handler) Find(c *gin.Context) {
 	id := c.Query("id")
 	code := c.Query("code")
 	name := c.Query("name")
+	active := c.Query("active")
 
-	products, err := h.productUsecase.Find(id, code, name)
+	var activeBool *bool
+	if active != "" {
+		parsedBool, err := strconv.ParseBool(active)
+		if err != nil {
+			logrus.Error(err.Error())
+			activeBool = nil
+		} else {
+			activeBool = &parsedBool
+		}
+	}
+
+	products, err := h.productUsecase.Find(id, code, name, activeBool)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "", products)
+}
+
+func (h *Handler) FindActive(c *gin.Context) {
+	id := c.Query("id")
+	code := c.Query("code")
+	name := c.Query("name")
+
+	var activeBool = true
+
+	products, err := h.productUsecase.Find(id, code, name, &activeBool)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 	}
@@ -57,9 +81,15 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	unitId := gjson.Get(string(jsonData), "unitId")
+	if !unitId.Exists() || unitId.String() == "" {
+		restutil.SendResponseFail(c, "Harap pilih satuan")
+		return
+	}
+
 	description := gjson.Get(string(jsonData), "description")
 
-	err = h.productUsecase.Create(code.String(), name.String(), description.String())
+	err = h.productUsecase.Create(code.String(), name.String(), description.String(), unitId.String())
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return

@@ -13,7 +13,7 @@ import (
 )
 
 type customerUsecase interface {
-	Find(id, code, name string) ([]*customerdomain.Customer, error)
+	Find(id, code, name string, active *bool) ([]*customerdomain.Customer, error)
 	Create(code, name, description string) error
 	Edit(id, code, name, description string, active bool) error
 	GetSellPrice(customerId, unitId, date, productId string) ([]*customerdomain.SellPriceResponse, error)
@@ -37,8 +37,32 @@ func (h *Handler) Find(c *gin.Context) {
 	id := c.Query("id")
 	code := c.Query("code")
 	name := c.Query("name")
+	active := c.Query("active")
 
-	products, err := h.customerUsecase.Find(id, code, name)
+	var pointerBool *bool
+	latestBool, err := strconv.ParseBool(active)
+	if err != nil {
+		pointerBool = nil
+	} else {
+		pointerBool = &latestBool
+	}
+
+	products, err := h.customerUsecase.Find(id, code, name, pointerBool)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+	}
+
+	restutil.SendResponseOk(c, "", products)
+}
+
+func (h *Handler) FindActive(c *gin.Context) {
+	id := c.Query("id")
+	code := c.Query("code")
+	name := c.Query("name")
+
+	active := true
+
+	products, err := h.customerUsecase.Find(id, code, name, &active)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 	}

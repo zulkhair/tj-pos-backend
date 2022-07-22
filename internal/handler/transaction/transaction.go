@@ -2,6 +2,7 @@ package transactionhandler
 
 import (
 	transactiondomain "dromatech/pos-backend/internal/domain/transaction"
+	transactionusecase "dromatech/pos-backend/internal/usecase/transaction"
 	restutil "dromatech/pos-backend/internal/util/rest"
 	"encoding/json"
 	"fmt"
@@ -11,19 +12,12 @@ import (
 	"io/ioutil"
 )
 
-type transactionUsecase interface {
-	CreateTransaction(transaction *transactiondomain.Transaction) error
-	ViewTransaction(startDate, endDate, code, stakeholderID, txType, status, productID string) ([]*transactiondomain.Transaction, error)
-	UpdateStatus(transactionID, status string) error
-	UpdateBuyPrice(transactionID, unitID, productID string, price float64) error
-}
-
 // Handler defines the handler
 type Handler struct {
-	transactionUsecase transactionUsecase
+	transactionUsecase transactionusecase.TransactoionUsecase
 }
 
-func New(transactionUsecase transactionUsecase) *Handler {
+func New(transactionUsecase transactionusecase.TransactoionUsecase) *Handler {
 	return &Handler{
 		transactionUsecase: transactionUsecase,
 	}
@@ -38,9 +32,10 @@ func (h *Handler) Find(c *gin.Context) {
 	status := c.Query("status")
 	productID := c.Query("productId")
 
-	transactions, err := h.transactionUsecase.ViewTransaction(startDate, endDate, code, stakeholderID, txType, status, productID)
+	transactions, err := h.transactionUsecase.ViewSellTransaction(startDate, endDate, code, stakeholderID, txType, status, productID)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
+		return
 	}
 
 	restutil.SendResponseOk(c, "", transactions)
@@ -51,6 +46,7 @@ func (h *Handler) Create(c *gin.Context) {
 	if err != nil {
 		logrus.Error(err.Error())
 		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
 	}
 
 	transaction := &transactiondomain.Transaction{}
@@ -58,10 +54,11 @@ func (h *Handler) Create(c *gin.Context) {
 	if err != nil {
 		logrus.Error(err.Error())
 		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
 	}
 
 	if transaction.StakeholderID == "" {
-		restutil.SendResponseFail(c, "Harap isi kode supplier")
+		restutil.SendResponseFail(c, "Harap isi kode stakeholder")
 		return
 	}
 
@@ -70,6 +67,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	transaction.UserId = restutil.GetSession(c).UserID
 	err = h.transactionUsecase.CreateTransaction(transaction)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
@@ -83,6 +81,7 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
 	}
 
 	id := gjson.Get(string(jsonData), "transactionId")
@@ -91,13 +90,7 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 		return
 	}
 
-	status := gjson.Get(string(jsonData), "status")
-	if !status.Exists() || status.String() == "" {
-		restutil.SendResponseFail(c, "Harap pilih status")
-		return
-	}
-
-	err = h.transactionUsecase.UpdateStatus(id.String(), status.String())
+	err = h.transactionUsecase.UpdateStatus(id.String())
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return
@@ -110,11 +103,30 @@ func (h *Handler) UpdateBuyPrice(c *gin.Context) {
 	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
 	}
 
-	price := gjson.Get(string(jsonData), "price")
-	if !price.Exists() {
-		restutil.SendResponseFail(c, "Harap pilih transaksi yang akan diperbarui")
+	buyPrice := gjson.Get(string(jsonData), "buyPrice")
+	if !buyPrice.Exists() {
+		restutil.SendResponseFail(c, "Harap isi harga beli")
+		return
+	}
+
+	sellPrice := gjson.Get(string(jsonData), "sellPrice")
+	if !sellPrice.Exists() {
+		restutil.SendResponseFail(c, "Harap isi harga jual")
+		return
+	}
+
+	quantity := gjson.Get(string(jsonData), "quantity")
+	if !buyPrice.Exists() {
+		restutil.SendResponseFail(c, "Harap isi jumlah jual")
+		return
+	}
+
+	buyQuantity := gjson.Get(string(jsonData), "buy_quantity")
+	if !sellPrice.Exists() {
+		restutil.SendResponseFail(c, "Harap isi harga beli")
 		return
 	}
 
@@ -124,19 +136,13 @@ func (h *Handler) UpdateBuyPrice(c *gin.Context) {
 		return
 	}
 
-	unitId := gjson.Get(string(jsonData), "unitId")
-	if !unitId.Exists() || unitId.String() == "" {
-		restutil.SendResponseFail(c, "Harap pilih satuan")
-		return
-	}
-
 	productId := gjson.Get(string(jsonData), "productId")
 	if !productId.Exists() || productId.String() == "" {
 		restutil.SendResponseFail(c, "Harap pilih produk")
 		return
 	}
 
-	err = h.transactionUsecase.UpdateBuyPrice(transactionId.String(), unitId.String(), productId.String(), price.Float())
+	err = h.transactionUsecase.UpdateBuyPrice(transactionId.String(), productId.String(), buyPrice.Float(), sellPrice.Float(), quantity.Int(), buyQuantity.Int())
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return
