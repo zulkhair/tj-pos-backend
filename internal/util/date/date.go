@@ -11,3 +11,7 @@ func DateFormat() string {
 func DateFormatResponse() string {
 	return "02-01-2006"
 }
+
+func TimeFormatResponse() string {
+	return "02-01-2006 15:04:05"
+}

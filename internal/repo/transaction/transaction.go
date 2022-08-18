@@ -75,8 +75,8 @@ func (r *Repo) Find(params []queryutil.Param) ([]*transactiondomain.Transaction,
 		var ProductID sql.NullString
 		var BuyPrice sql.NullFloat64
 		var SellPrice sql.NullFloat64
-		var Quantity sql.NullInt64
-		var BuyQuantity sql.NullInt64
+		var Quantity sql.NullFloat64
+		var BuyQuantity sql.NullFloat64
 
 		rows.Scan(&ID, &Code, &Date, &StakeholderID, &TransactionType, &Status, &UnitID, &ProductID, &BuyPrice, &SellPrice, &Quantity, &BuyQuantity)
 
@@ -106,8 +106,8 @@ func (r *Repo) Find(params []queryutil.Param) ([]*transactiondomain.Transaction,
 		detail.ProductID = ProductID.String
 		detail.BuyPrice = BuyPrice.Float64
 		detail.SellPrice = SellPrice.Float64
-		detail.Quantity = Quantity.Int64
-		detail.BuyQuantity = BuyQuantity.Int64
+		detail.Quantity = Quantity.Float64
+		detail.BuyQuantity = BuyQuantity.Float64
 
 		entity.TransactionDetail = append(entity.TransactionDetail, detail)
 
@@ -173,8 +173,8 @@ func (r *Repo) FindSells(params []queryutil.Param) ([]*transactiondomain.Transac
 		var ProductName sql.NullString
 		var BuyPrice sql.NullFloat64
 		var SellPrice sql.NullFloat64
-		var Quantity sql.NullInt64
-		var BuyQuantity sql.NullInt64
+		var Quantity sql.NullFloat64
+		var BuyQuantity sql.NullFloat64
 
 		rows.Scan(&ID, &Code, &Date, &StakeholderID, &CustomerCode, &CustomerName, &TransactionType, &Status, &ReferenceCode,
 			&UserId, &UserName, &CreatedTime, &UnitID, &UnitCode, &ProductID, &ProductCode, &ProductName, &BuyPrice, &SellPrice, &Quantity, &BuyQuantity)
@@ -186,7 +186,7 @@ func (r *Repo) FindSells(params []queryutil.Param) ([]*transactiondomain.Transac
 
 		if value, ok := entityMap[ID.String]; ok {
 			entity = value
-			entity.Total = int64(SellPrice.Float64) * Quantity.Int64
+			entity.Total = entity.Total + ((SellPrice.Float64) * Quantity.Float64)
 		} else {
 			entity = &transactiondomain.TransactionStatus{}
 			entity.ID = ID.String
@@ -200,8 +200,8 @@ func (r *Repo) FindSells(params []queryutil.Param) ([]*transactiondomain.Transac
 			entity.ReferenceCode = ReferenceCode.String
 			entity.UserId = UserId.String
 			entity.UserName = UserName.String
-			entity.CreatedTime = CreatedTime.Format(dateutil.TimeFormat())
-			entity.Total = entity.Total + (int64(SellPrice.Float64) * Quantity.Int64)
+			entity.CreatedTime = CreatedTime.Format(dateutil.TimeFormatResponse())
+			entity.Total = (SellPrice.Float64) * Quantity.Float64
 
 			entities = append(entities, entity)
 			entityMap[ID.String] = entity
@@ -216,8 +216,8 @@ func (r *Repo) FindSells(params []queryutil.Param) ([]*transactiondomain.Transac
 		detail.ProductName = ProductName.String
 		detail.BuyPrice = BuyPrice.Float64
 		detail.SellPrice = SellPrice.Float64
-		detail.Quantity = Quantity.Int64
-		detail.BuyQuantity = BuyQuantity.Int64
+		detail.Quantity = Quantity.Float64
+		detail.BuyQuantity = BuyQuantity.Float64
 
 		entity.TransactionDetail = append(entity.TransactionDetail, detail)
 

@@ -276,7 +276,7 @@ func (r *Repo) FindBuyPrice(params []queryutil.Param) ([]*supplierdomain.PriceRe
 
 		entity := &supplierdomain.PriceResponse{
 			ID:              ID.String,
-			Date:            Date.Format(dateutil.TimeFormat()),
+			Date:            Date.Format(dateutil.TimeFormatResponse()),
 			SupplierId:      SupplierId.String,
 			UnitId:          UnitId.String,
 			ProductID:       ProductId.String,

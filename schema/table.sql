@@ -186,6 +186,6 @@ CREATE TABLE public.price_template_detail
     product_id             VARCHAR(32) NOT NULL,
     price                  NUMERIC     NOT NULL,
     FOREIGN KEY (product_id) REFERENCES public.product (id),
-    FOREIGN KEY (price_template_id) REFERENCES public.sell_price_template (id)
+    FOREIGN KEY (price_template_id) REFERENCES public.price_template (id)
 );
 

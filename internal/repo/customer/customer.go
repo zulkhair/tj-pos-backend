@@ -277,7 +277,7 @@ func (r *Repo) FindSellPrice(params []queryutil.Param) ([]*customerdomain.PriceR
 
 		entity := &customerdomain.PriceResponse{
 			ID:              ID.String,
-			Date:            Date.Format(dateutil.TimeFormat()),
+			Date:            Date.Format(dateutil.TimeFormatResponse()),
 			CustomerId:      CustomerId.String,
 			UnitId:          UnitId.String,
 			ProductID:       ProductId.String,
