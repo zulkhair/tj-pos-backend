@@ -254,7 +254,7 @@ func (r *Repo) Update(kontrabonId string, transactionIds []string, status string
 				tx.Rollback()
 				return tx.Error
 			}
-		} else if status == transactiondomain.TRANSACTION_STATUS_PEMBUATAN {
+		} else if status == transactiondomain.TRANSACTION_PEMBUATAN {
 			tx.Exec("DELETE FROM public.kontrabon_transaction WHERE kontrabon_id=? AND transaction_id=?;", kontrabonId, transactionId)
 			if tx.Error != nil {
 				tx.Rollback()

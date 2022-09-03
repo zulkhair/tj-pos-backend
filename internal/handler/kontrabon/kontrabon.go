@@ -143,7 +143,7 @@ func (h *Handler) Remove(c *gin.Context) {
 		return
 	}
 
-	err = h.kontrabonUsecase.Update(request.KontrabonID, request.TransactionIDs, transactiondomain.TRANSACTION_STATUS_PEMBUATAN)
+	err = h.kontrabonUsecase.Update(request.KontrabonID, request.TransactionIDs, transactiondomain.TRANSACTION_PEMBUATAN)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return

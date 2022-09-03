@@ -99,6 +99,28 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 	restutil.SendResponseOk(c, "Transaksi berhasil diperbarui", nil)
 }
 
+func (h *Handler) CancelTrx(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
+	}
+
+	id := gjson.Get(string(jsonData), "transactionId")
+	if !id.Exists() || id.String() == "" {
+		restutil.SendResponseFail(c, "Harap pilih transaksi yang akan diperbarui")
+		return
+	}
+
+	err = h.transactionUsecase.CancelTrx(id.String())
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "Transaksi berhasil diperbarui", nil)
+}
+
 func (h *Handler) UpdateBuyPrice(c *gin.Context) {
 	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {

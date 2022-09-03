@@ -26,6 +26,7 @@ type TransactoionUsecase interface {
 	UpdateStatus(transactionID string) error
 	UpdateBuyPrice(transactionID, productID string, buyPrice, sellPrice float64, quantity, buyQuantity int64) error
 	ViewSellTransaction(startDate, endDate, code, stakeholderID, txType, status, productID string) ([]*transactiondomain.TransactionStatus, error)
+	CancelTrx(transactionID string) error
 }
 
 type Usecase struct {
@@ -82,7 +83,7 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 
 	transaction.ID = transactionID
 	transaction.Code = transactionCode
-	transaction.Status = transactiondomain.TRANSACTION_STATUS_PEMBUATAN
+	transaction.Status = transactiondomain.TRANSACTION_PEMBUATAN
 	transaction.CreatedTime = timeNow.Format(dateutil.TimeFormat())
 
 	uc.transactionRepo.Create(transaction, tx)
@@ -377,12 +378,40 @@ func (uc *Usecase) UpdateStatus(transactionID string) error {
 	}
 
 	status := transactions[0].Status
-	if status == transactiondomain.TRANSACTION_STATUS_PEMBUATAN{
+	if status == transactiondomain.TRANSACTION_PEMBUATAN {
 		status = transactiondomain.TRANSACTION_KONTRABON
 	}else if transactions[0].Status == transactiondomain.TRANSACTION_KONTRABON {
 		status = transactiondomain.TRANSACTION_DIBAYAR
 	}
 	err = uc.transactionRepo.UpdateStatus(transactionID, status)
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan update status transaksi")
+	}
+	return nil
+}
+
+func (uc *Usecase) CancelTrx(transactionID string) error {
+	var param []queryutil.Param
+	param = append(param, queryutil.Param{
+		Logic:    "AND",
+		Field:    "t.id",
+		Operator: "=",
+		Value:    transactionID,
+	})
+
+	transactions, err := uc.transactionRepo.FindSells(param)
+	if err != nil{
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan update status transaksi")
+	}
+
+	if transactions == nil || len(transactions) == 0{
+		logrus.Error("Transactions is nil or zero")
+		return fmt.Errorf("Terjadi kesalahan saat melakukan update status transaksi")
+	}
+
+	err = uc.transactionRepo.UpdateStatus(transactionID, transactiondomain.TRANSACTION_BATAL)
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan update status transaksi")
