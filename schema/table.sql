@@ -164,7 +164,7 @@ CREATE TABLE public.kontrabon
     customer_id  VARCHAR(32)  NOT NULL,
     created_time TIMESTAMP WITHOUT TIME ZONE,
     status       VARCHAR(128) NOT NULL,
-    FOREIGN KEY (customer_id) REFERENCES public.customer (id),
+    FOREIGN KEY (customer_id) REFERENCES public.customer (id)
 );
 CREATE TABLE public.kontrabon_transaction
 (
