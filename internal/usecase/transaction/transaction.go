@@ -21,11 +21,11 @@ import (
 )
 
 type TransactoionUsecase interface {
-	CreateTransaction(transaction *transactiondomain.Transaction) error
+	CreateTransaction(transaction *transactiondomain.Transaction) (string, error)
 	ViewTransaction(startDate, endDate, code, stakeholderID, txType, status, productID string) ([]*transactiondomain.Transaction, error)
 	UpdateStatus(transactionID string) error
 	UpdateBuyPrice(transactionID, productID string, buyPrice, sellPrice float64, quantity, buyQuantity int64) error
-	ViewSellTransaction(startDate, endDate, code, stakeholderID, txType, status, productID string) ([]*transactiondomain.TransactionStatus, error)
+	ViewSellTransaction(startDate, endDate, code, stakeholderID, txType, status, productID, txId string) ([]*transactiondomain.TransactionStatus, error)
 	CancelTrx(transactionID string) error
 }
 
@@ -47,7 +47,7 @@ func New(transactionRepo transactionrepo.TransactionRepo, sequenceRepo sequencer
 	return uc
 }
 
-func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction) error {
+func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction) (string, error) {
 	tx := global.DBCON.Begin()
 
 	timeNow := time.Now()
@@ -59,14 +59,14 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 		supplier, err := uc.supplierRepo.Find(map[string]interface{}{"id": transaction.StakeholderID})
 		if err != nil {
 			logrus.Error(err.Error())
-			return fmt.Errorf("Supplier dengan kode '%s' tidak ditemukan", transaction.StakeholderID)
+			return "", fmt.Errorf("Supplier dengan kode '%s' tidak ditemukan", transaction.StakeholderID)
 		}
 		stakeHolderCode = supplier[0].Code
 	} else {
 		customer, err := uc.customerRepo.Find(map[string]interface{}{"id": transaction.StakeholderID})
 		if err != nil {
 			logrus.Error(err.Error())
-			return fmt.Errorf("Customer dengan kode '%s' tidak ditemukan", transaction.StakeholderID)
+			return "", fmt.Errorf("Customer dengan kode '%s' tidak ditemukan", transaction.StakeholderID)
 		}
 		stakeHolderCode = customer[0].Code
 	}
@@ -74,7 +74,7 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 	dateCode, err := time.Parse(dateutil.DateFormat(), transaction.Date)
 	if err != nil {
 		logrus.Error(err.Error())
-		return fmt.Errorf("Terjadi kesalahan saat melakukan transaksi")
+		return "", fmt.Errorf("Terjadi kesalahan saat melakukan transaksi")
 	}
 
 	transactionCode := stakeHolderCode + "/" + stringutil.ToRoman(int(dateCode.Month())) + "/" + dateCode.Format("2006")
@@ -91,7 +91,7 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 	if tx.Error != nil {
 		tx.Rollback()
 		logrus.Error(tx.Error.Error())
-		return fmt.Errorf("Terjadi kesalahan saat menambahkan transaksi")
+		return "", fmt.Errorf("Terjadi kesalahan saat menambahkan transaksi")
 	}
 
 	for _, detail := range transaction.TransactionDetail {
@@ -114,7 +114,7 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 		if err != nil {
 			tx.Rollback()
 			logrus.Error(err.Error())
-			return fmt.Errorf("Terjadi kesalahan saat menambahkan transaksi")
+			return "", fmt.Errorf("Terjadi kesalahan saat menambahkan transaksi")
 		}
 
 		if buyPriceOlds != nil && len(buyPriceOlds) > 0 {
@@ -180,7 +180,7 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 		if err != nil {
 			tx.Rollback()
 			logrus.Error(err.Error())
-			return fmt.Errorf("Terjadi kesalahan saat menambahkan transaksi")
+			return "", fmt.Errorf("Terjadi kesalahan saat menambahkan transaksi")
 		}
 
 		if sellPriceOlds != nil && len(sellPriceOlds) > 0 {
@@ -228,9 +228,9 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 	if tx.Error != nil {
 		tx.Rollback()
 		logrus.Error(tx.Error.Error())
-		return fmt.Errorf("Terjadi kesalahan saat menambahkan transaksi")
+		return "", fmt.Errorf("Terjadi kesalahan saat menambahkan transaksi")
 	}
-	return nil
+	return transaction.ID, nil
 }
 
 func (uc *Usecase) ViewTransaction(startDate, endDate, code, stakeholderID, txType, status, productID string) ([]*transactiondomain.Transaction, error) {
@@ -295,7 +295,7 @@ func (uc *Usecase) ViewTransaction(startDate, endDate, code, stakeholderID, txTy
 	return uc.transactionRepo.Find(param)
 }
 
-func (uc *Usecase) ViewSellTransaction(startDate, endDate, code, stakeholderID, txType, status, productID string) ([]*transactiondomain.TransactionStatus, error) {
+func (uc *Usecase) ViewSellTransaction(startDate, endDate, code, stakeholderID, txType, status, productID, txId string) ([]*transactiondomain.TransactionStatus, error) {
 	var param []queryutil.Param
 	if startDate != "" {
 		param = append(param, queryutil.Param{
@@ -351,6 +351,15 @@ func (uc *Usecase) ViewSellTransaction(startDate, endDate, code, stakeholderID, 
 			Field:    "td.product_id",
 			Operator: "=",
 			Value:    productID,
+		})
+	}
+
+	if txId != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "t.id",
+			Operator: "=",
+			Value:    txId,
 		})
 	}
 

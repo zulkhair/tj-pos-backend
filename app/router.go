@@ -75,6 +75,7 @@ func newRoutes(appHandler AppHandler) *gin.Engine {
 	router.POST("/api/price/template/create", appHandler.priceHandler.Create)
 	router.POST("/api/price/template/edit-price", appHandler.priceHandler.EditPrice)
 	router.POST("/api/price/template/apply", appHandler.priceHandler.ApplyToCustomer)
+	router.POST("/api/price/template/delete", appHandler.priceHandler.DeleteTemplate)
 
 	return router
 }

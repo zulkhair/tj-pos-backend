@@ -68,7 +68,7 @@ func (h *Handler) Create(c *gin.Context) {
 	restutil.SendResponseOk(c, "Template berhasil ditambahkan", nil)
 }
 
-func (h *Handler) EditPrice(c *gin.Context){
+func (h *Handler) EditPrice(c *gin.Context) {
 	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		c.AbortWithError(400, fmt.Errorf("bad request"))
@@ -101,7 +101,7 @@ func (h *Handler) EditPrice(c *gin.Context){
 	restutil.SendResponseOk(c, "Harga berhasil diubah", nil)
 }
 
-func (h *Handler) ApplyToCustomer(c *gin.Context){
+func (h *Handler) ApplyToCustomer(c *gin.Context) {
 	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		logrus.Error(err.Error())
@@ -135,4 +135,22 @@ func (h *Handler) ApplyToCustomer(c *gin.Context){
 	}
 
 	restutil.SendResponseOk(c, "Harga berhasil diterapkan", nil)
+}
+
+func (h *Handler) DeleteTemplate(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		logrus.Error(err.Error())
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
+	}
+
+	request := &pricedomain.DeleteTemplateReq{}
+	err = json.Unmarshal(jsonData, request)
+	if request.TemplateID != "" {
+		h.priceUsecase.DeleteTemplate(request.TemplateID)
+		restutil.SendResponseOk(c, "Template berhasil dihapus", nil)
+		return
+	}
+	restutil.SendResponseFail(c, "Harap pilih template")
 }

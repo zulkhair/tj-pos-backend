@@ -15,6 +15,7 @@ type PriceRepo interface {
 	Create(name string) error
 	AddPrice(priceTemplateId string, productId string, price float64) error
 	EditPrice(priceTemplateId string, productId string, price float64) error
+	DeleteTemplate(templateId string) error
 }
 
 type Repo struct {
@@ -131,4 +132,23 @@ func (r *Repo) AddPrice(priceTemplateId string, productId string, price float64)
 
 func (r *Repo) EditPrice(priceTemplateId string, productId string, price float64) error {
 	return global.DBCON.Exec("UPDATE public.price_template_detail SET price=? WHERE price_template_id=? AND product_id=?;", price, priceTemplateId, productId).Error
+}
+
+func (r *Repo) DeleteTemplate(templateId string) error {
+	tx := global.DBCON.Begin()
+
+	tx.Exec("DELETE FROM public.price_template_detail WHERE price_template_id = ?;", templateId)
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	tx.Exec("DELETE FROM public.price_template WHERE id = ?;", templateId)
+
+	if tx.Error != nil {
+		tx.Rollback()
+		return tx.Error
+	}
+
+	return tx.Commit().Error
 }

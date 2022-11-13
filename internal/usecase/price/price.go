@@ -20,6 +20,7 @@ type PriceUsecase interface {
 	Create(templateName string) error
 	EditPrice(templateId, productId string, price float64) error
 	ApplyToCustomer(templateId string, customerId []string, userId string) error
+	DeleteTemplate(templateId string) error
 }
 
 type Usecase struct {
@@ -163,4 +164,8 @@ func (uc *Usecase) ApplyToCustomer(templateId string, customerId []string, userI
 	tx.Commit()
 
 	return nil
+}
+
+func (uc *Usecase) DeleteTemplate(templateId string) error{
+	return uc.priceRepo.DeleteTemplate(templateId)
 }

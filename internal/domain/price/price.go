@@ -15,3 +15,7 @@ type ApplyToCustomerReq struct {
 	TemplateID  string   `json:"templateId"`
 	CustomerIDs []string `json:"customerIds"`
 }
+
+type DeleteTemplateReq struct {
+	TemplateID  string   `json:"templateId"`
+}

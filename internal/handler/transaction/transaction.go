@@ -31,8 +31,9 @@ func (h *Handler) Find(c *gin.Context) {
 	txType := c.Query("txType")
 	status := c.Query("status")
 	productID := c.Query("productId")
+	txId := c.Query("txId")
 
-	transactions, err := h.transactionUsecase.ViewSellTransaction(startDate, endDate, code, stakeholderID, txType, status, productID)
+	transactions, err := h.transactionUsecase.ViewSellTransaction(startDate, endDate, code, stakeholderID, txType, status, productID, txId)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return
@@ -68,13 +69,15 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	transaction.UserId = restutil.GetSession(c).UserID
-	err = h.transactionUsecase.CreateTransaction(transaction)
+	txId, err := h.transactionUsecase.CreateTransaction(transaction)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return
 	}
 
-	restutil.SendResponseOk(c, "Transaksi berhasil ditambahkan", nil)
+	txMap := map[string]string{"id": txId}
+
+	restutil.SendResponseOk(c, "Transaksi berhasil ditambahkan", txMap)
 }
 
 func (h *Handler) UpdateStatus(c *gin.Context) {
