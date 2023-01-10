@@ -21,6 +21,7 @@ type PriceUsecase interface {
 	EditPrice(templateId, productId string, price float64) error
 	ApplyToCustomer(templateId string, customerId []string, userId string) error
 	DeleteTemplate(templateId string) error
+	CopyTemplate(templateId, templateName string) error
 }
 
 type Usecase struct {
@@ -82,7 +83,7 @@ func (uc *Usecase) Create(templateName string) error {
 		return fmt.Errorf("Template dengan nama %s sudah terdaftar", templateName)
 	}
 
-	err = uc.priceRepo.Create(templateName)
+	_, err = uc.priceRepo.Create(templateName)
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan penambahan data template harga")
@@ -168,4 +169,38 @@ func (uc *Usecase) ApplyToCustomer(templateId string, customerId []string, userI
 
 func (uc *Usecase) DeleteTemplate(templateId string) error{
 	return uc.priceRepo.DeleteTemplate(templateId)
+}
+
+func (uc *Usecase) CopyTemplate(templateId, templateName string) error {
+	products, err := uc.priceRepo.Find(map[string]interface{}{"pt.name": templateName})
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan duplikasi data template harga")
+	}
+
+	if products != nil || len(products) > 0 {
+		return fmt.Errorf("Template dengan nama %s sudah terdaftar", templateName)
+	}
+
+	ID, err := uc.priceRepo.Create(templateName)
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan duplikasi data template harga")
+	}
+
+	priceDetail, err := uc.priceRepo.FindDetail(map[string]interface{}{"ptd.price_template_id": templateId})
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan duplikasi data template harga")
+	}
+
+	for _, price := range priceDetail {
+		err = uc.priceRepo.AddPrice(ID, price.ProductID, price.Price)
+		if err != nil {
+			logrus.Error(err.Error())
+			return fmt.Errorf("Terjadi kesalahan saat melakukan duplikasi data template harga")
+		}
+	}
+
+	return nil
 }

@@ -154,3 +154,30 @@ func (h *Handler) DeleteTemplate(c *gin.Context) {
 	}
 	restutil.SendResponseFail(c, "Harap pilih template")
 }
+
+func (h *Handler) CopyTemplate(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+	}
+
+	templateId := gjson.Get(string(jsonData), "templateId")
+	if !templateId.Exists() || templateId.String() == "" {
+		restutil.SendResponseFail(c, "Harap pilih template")
+		return
+	}
+
+	name := gjson.Get(string(jsonData), "name")
+	if !name.Exists() || name.String() == "" {
+		restutil.SendResponseFail(c, "Harap isi nama template")
+		return
+	}
+
+	err = h.priceUsecase.CopyTemplate(templateId.String(), name.String())
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "Template berhasil diduplikasi", nil)
+}

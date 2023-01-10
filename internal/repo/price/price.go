@@ -12,7 +12,7 @@ import (
 type PriceRepo interface {
 	Find(params map[string]interface{}) ([]*pricedomain.PriceTemplate, error)
 	FindDetail(params map[string]interface{}) ([]*pricedomain.PriceTemplateDetail, error)
-	Create(name string) error
+	Create(name string) (string, error)
 	AddPrice(priceTemplateId string, productId string, price float64) error
 	EditPrice(priceTemplateId string, productId string, price float64) error
 	DeleteTemplate(templateId string) error
@@ -118,10 +118,10 @@ func (r *Repo) FindDetail(params map[string]interface{}) ([]*pricedomain.PriceTe
 	return entities, nil
 }
 
-func (r *Repo) Create(name string) error {
+func (r *Repo) Create(name string) (string, error) {
 	ID := stringutil.GenerateUUID()
 
-	return global.DBCON.Exec("INSERT INTO public.price_template(id, name) VALUES (?, ?);", ID, name).Error
+	return ID, global.DBCON.Exec("INSERT INTO public.price_template(id, name) VALUES (?, ?);", ID, name).Error
 }
 
 func (r *Repo) AddPrice(priceTemplateId string, productId string, price float64) error{
