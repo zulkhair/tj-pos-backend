@@ -110,6 +110,12 @@ func (h *Handler) Edit(c *gin.Context) {
 		return
 	}
 
+	unitId := gjson.Get(string(jsonData), "unitId")
+	if !unitId.Exists() || unitId.String() == "" {
+		restutil.SendResponseFail(c, "Harap pilih unit")
+		return
+	}
+
 	code := gjson.Get(string(jsonData), "code")
 	if !code.Exists() || code.String() == "" {
 		restutil.SendResponseFail(c, "Harap isi kode produk")
@@ -130,7 +136,7 @@ func (h *Handler) Edit(c *gin.Context) {
 
 	description := gjson.Get(string(jsonData), "description")
 
-	err = h.productUsecase.Edit(id.String(), code.String(), name.String(), description.String(), active.Bool())
+	err = h.productUsecase.Edit(id.String(), unitId.String(), code.String(), name.String(), description.String(), active.Bool())
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return

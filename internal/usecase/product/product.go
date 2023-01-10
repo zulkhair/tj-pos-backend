@@ -12,7 +12,7 @@ import (
 type ProductUsecase interface {
 	Find(id, code, name string, active *bool) ([]*productdomain.Product, error)
 	Create(code, name, description, unitId string) error
-	Edit(id, code, name, description string, active bool) error
+	Edit(id, unitId, code, name, description string, active bool) error
 }
 
 type Usecase struct {
@@ -75,7 +75,7 @@ func (uc *Usecase) Create(code, name, description, unitId string) error {
 	return nil
 }
 
-func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
+func (uc *Usecase) Edit(id, unitId, code, name, description string, active bool) error {
 	products, err := uc.productRepo.Find(map[string]interface{}{"p.id": id})
 	if err != nil {
 		logrus.Error(err.Error())
@@ -103,6 +103,7 @@ func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 
 	product.Code = code
 	product.Name = name
+	product.UnitID = unitId
 	product.Description = description
 	product.Active = active
 
