@@ -189,3 +189,9 @@ CREATE TABLE public.price_template_detail
     FOREIGN KEY (price_template_id) REFERENCES public.price_template (id)
 );
 
+ALTER TABLE price_template
+    ADD COLUMN applied_to VARCHAR (512);
+
+ALTER TABLE price_template_detail
+    ADD COLUMN checked boolean;
+

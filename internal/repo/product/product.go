@@ -37,7 +37,7 @@ func (r *Repo) Find(params map[string]interface{}) ([]*productdomain.Product, er
 		where = "WHERE " + where
 	}
 
-	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT p.id, p.code, p.name, p.description, p.active, u.id, u.code FROM product p JOIN unit u ON (u.id = p.unit_id) %s ORDER BY p.code", where), values...).Rows()
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT p.id, p.code, p.name, p.description, p.active, u.id, u.code FROM product p JOIN unit u ON (u.id = p.unit_id) %s ORDER BY p.name", where), values...).Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err

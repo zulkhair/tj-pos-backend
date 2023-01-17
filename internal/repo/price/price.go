@@ -7,6 +7,7 @@ import (
 	stringutil "dromatech/pos-backend/internal/util/string"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type PriceRepo interface {
@@ -16,6 +17,8 @@ type PriceRepo interface {
 	AddPrice(priceTemplateId string, productId string, price float64) error
 	EditPrice(priceTemplateId string, productId string, price float64) error
 	DeleteTemplate(templateId string) error
+	UpdateTemplate(priceTemplateId, customerId string, tx *gorm.DB)
+	UpdateChecked(request pricedomain.Download) error
 }
 
 type Repo struct {
@@ -41,7 +44,7 @@ func (r *Repo) Find(params map[string]interface{}) ([]*pricedomain.PriceTemplate
 		where = "WHERE " + where
 	}
 
-	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT pt.id, pt.name FROM price_template pt %s", where), values...).Rows()
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT pt.id, pt.name, pt.applied_to FROM price_template pt %s", where), values...).Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err
@@ -52,8 +55,9 @@ func (r *Repo) Find(params map[string]interface{}) ([]*pricedomain.PriceTemplate
 	for rows.Next() {
 		var ID sql.NullString
 		var Name sql.NullString
+		var AppliedTo sql.NullString
 
-		rows.Scan(&ID, &Name)
+		rows.Scan(&ID, &Name, &AppliedTo)
 
 		entity := &pricedomain.PriceTemplate{}
 		if ID.Valid && ID.String != "" {
@@ -65,6 +69,7 @@ func (r *Repo) Find(params map[string]interface{}) ([]*pricedomain.PriceTemplate
 		entity = &pricedomain.PriceTemplate{}
 		entity.ID = ID.String
 		entity.Name = Name.String
+		entity.AppliedTo = AppliedTo.String
 
 		entities = append(entities, entity)
 	}
@@ -87,7 +92,7 @@ func (r *Repo) FindDetail(params map[string]interface{}) ([]*pricedomain.PriceTe
 		where = "WHERE " + where
 	}
 
-	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT ptd.product_id, ptd.price FROM public.price_template_detail ptd %s", where), values...).Rows()
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT ptd.id, ptd.product_id, ptd.price, ptd.checked FROM public.price_template_detail ptd %s", where), values...).Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err
@@ -96,10 +101,12 @@ func (r *Repo) FindDetail(params map[string]interface{}) ([]*pricedomain.PriceTe
 
 	var entities []*pricedomain.PriceTemplateDetail
 	for rows.Next() {
+		var ID sql.NullString
 		var ProductID sql.NullString
 		var Price sql.NullFloat64
+		var Checked sql.NullBool
 
-		rows.Scan(&ProductID, &Price)
+		rows.Scan(&ID, &ProductID, &Price, &Checked)
 
 		entity := &pricedomain.PriceTemplateDetail{}
 		if ProductID.Valid && ProductID.String != "" {
@@ -109,8 +116,10 @@ func (r *Repo) FindDetail(params map[string]interface{}) ([]*pricedomain.PriceTe
 		}
 
 		entity = &pricedomain.PriceTemplateDetail{}
+		entity.ID = ID.String
 		entity.ProductID = ProductID.String
 		entity.Price = Price.Float64
+		entity.Checked = Checked.Bool
 
 		entities = append(entities, entity)
 	}
@@ -152,3 +161,21 @@ func (r *Repo) DeleteTemplate(templateId string) error {
 
 	return tx.Commit().Error
 }
+
+func (r *Repo) UpdateTemplate(priceTemplateId, customerId string, tx *gorm.DB){
+	tx.Exec("UPDATE public.price_template SET applied_to=? WHERE id=?;", customerId, priceTemplateId)
+}
+
+func (r *Repo) UpdateChecked(request pricedomain.Download) error{
+	tx := global.DBCON.Begin()
+
+	tx.Exec("UPDATE public.price_template_detail SET checked=FALSE WHERE price_template_id = ?;", request.TemplateID)
+	if tx.Error != nil {
+		tx.Rollback()
+		return tx.Error
+	}
+
+	tx.Exec("UPDATE public.price_template_detail SET checked=TRUE WHERE id IN ?;", request.TemplateDetailIDs)
+	return tx.Commit().Error
+}
+

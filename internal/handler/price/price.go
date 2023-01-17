@@ -181,3 +181,25 @@ func (h *Handler) CopyTemplate(c *gin.Context) {
 
 	restutil.SendResponseOk(c, "Template berhasil diduplikasi", nil)
 }
+
+func (h *Handler) Download(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+	}
+
+	request := &pricedomain.Download{}
+	err = json.Unmarshal(jsonData, request)
+	if err != nil {
+		logrus.Error(err.Error())
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
+	}
+
+	if request != nil && request.TemplateDetailIDs != nil && len(request.TemplateDetailIDs) > 0 {
+		h.priceUsecase.Download(*request)
+		restutil.SendResponseOk(c, "Template berhasil diunduh", nil)
+		return
+	}
+	restutil.SendResponseFail(c, "Harap pilih template")
+}

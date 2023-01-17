@@ -22,6 +22,7 @@ type PriceUsecase interface {
 	ApplyToCustomer(templateId string, customerId []string, userId string) error
 	DeleteTemplate(templateId string) error
 	CopyTemplate(templateId, templateName string) error
+	Download(request pricedomain.Download) error
 }
 
 type Usecase struct {
@@ -48,7 +49,7 @@ func (uc *Usecase) Find(name string) ([]*pricedomain.PriceTemplate, error) {
 	}
 
 	entities, err := uc.priceRepo.Find(param)
-	if err != nil{
+	if err != nil {
 		logrus.Error(err.Error())
 		return nil, fmt.Errorf("Terjadi kesalahan saat melakukan pencarian")
 	}
@@ -64,7 +65,7 @@ func (uc *Usecase) FindDetail(templateId string) ([]*pricedomain.PriceTemplateDe
 	}
 
 	entities, err := uc.priceRepo.FindDetail(param)
-	if err != nil{
+	if err != nil {
 		logrus.Error(err.Error())
 		return nil, fmt.Errorf("Terjadi kesalahan saat melakukan pencarian")
 	}
@@ -135,7 +136,9 @@ func (uc *Usecase) ApplyToCustomer(templateId string, customerId []string, userI
 	}
 
 	tx := global.DBCON.Begin()
+	appliedCustomer := ""
 	for _, cID := range customerId {
+		appliedCustomer = appliedCustomer + cID + ";"
 		for _, product := range products {
 			price := float64(0)
 			if detail, ok := priceDetailMap[product.ID]; ok {
@@ -162,13 +165,23 @@ func (uc *Usecase) ApplyToCustomer(templateId string, customerId []string, userI
 			}
 		}
 	}
+	uc.priceRepo.UpdateTemplate(templateId, appliedCustomer, tx)
+	if tx.Error != nil {
+		tx.Rollback()
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat melakukan perubahan data harga")
+	}
 	tx.Commit()
 
 	return nil
 }
 
-func (uc *Usecase) DeleteTemplate(templateId string) error{
+func (uc *Usecase) DeleteTemplate(templateId string) error {
 	return uc.priceRepo.DeleteTemplate(templateId)
+}
+
+func (uc *Usecase) Download(request pricedomain.Download) error {
+	return uc.priceRepo.UpdateChecked(request)
 }
 
 func (uc *Usecase) CopyTemplate(templateId, templateName string) error {

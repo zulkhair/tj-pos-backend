@@ -3,12 +3,15 @@ package pricedomain
 type PriceTemplate struct {
 	ID                  string                 `json:"id"`
 	Name                string                 `json:"name"`
+	AppliedTo           string                 `json:"appliedTo"`
 	PriceTemplateDetail []*PriceTemplateDetail `json:"priceTemplateDetail"`
 }
 
 type PriceTemplateDetail struct {
-	ProductID   string  `json:"productId"`
-	Price       float64 `json:"price"`
+	ID        string  `json:"id"`
+	ProductID string  `json:"productId"`
+	Price     float64 `json:"price"`
+	Checked   bool    `json:"checked"`
 }
 
 type ApplyToCustomerReq struct {
@@ -16,6 +19,11 @@ type ApplyToCustomerReq struct {
 	CustomerIDs []string `json:"customerIds"`
 }
 
-type DeleteTemplateReq struct {
+type Download struct {
 	TemplateID  string   `json:"templateId"`
+	TemplateDetailIDs []string `json:"templateDetailIds"`
+}
+
+type DeleteTemplateReq struct {
+	TemplateID string `json:"templateId"`
 }
