@@ -77,8 +77,9 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 		return "", fmt.Errorf("Terjadi kesalahan saat melakukan transaksi")
 	}
 
+	seqcode := stakeHolderCode + "/" + dateCode.Format("2006")
+	seq := uc.sequenceRepo.NextValTx(seqcode, tx)
 	transactionCode := stakeHolderCode + "/" + stringutil.ToRoman(int(dateCode.Month())) + "/" + dateCode.Format("2006")
-	seq := uc.sequenceRepo.NextValTx(transactionCode, tx)
 	transactionCode = strconv.Itoa(int(seq)) + "/" + transactionCode
 
 	transaction.ID = transactionID
