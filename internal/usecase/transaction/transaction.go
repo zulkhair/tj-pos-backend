@@ -364,6 +364,13 @@ func (uc *Usecase) ViewSellTransaction(startDate, endDate, code, stakeholderID, 
 		})
 	}
 
+	param = append(param, queryutil.Param{
+		Logic:    "AND",
+		Field:    "t.status",
+		Operator: "<>",
+		Value:    "BATAL",
+	})
+
 	return uc.transactionRepo.FindSells(param)
 }
 
