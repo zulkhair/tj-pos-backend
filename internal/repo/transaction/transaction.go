@@ -20,6 +20,7 @@ type TransactionRepo interface {
 	UpdateStatus(transactionID, status string) error
 	UpdatePrice(transactionID, productID string, buyPrice, sellPrice float64, quantity, buyQuantity int64) error
 	FindSells(params []queryutil.Param) ([]*transactiondomain.TransactionStatus, error)
+	UpdateTransaction(entity *transactiondomain.Transaction, tx *gorm.DB)
 }
 
 type Repo struct {
@@ -283,4 +284,25 @@ func (r *Repo) UpdatePrice(transactionID, productID string, buyPrice, sellPrice 
 	return global.DBCON.Exec("UPDATE public.transaction_detail "+
 		"SET buy_price=?, sell_price=?, quantity=?, buy_quantity=? WHERE transaction_id=?, product_id=?;",
 		buyPrice, sellPrice, quantity, buyQuantity, transactionID, productID).Error
+}
+
+func (r *Repo) UpdateTransaction(entity *transactiondomain.Transaction, tx *gorm.DB) {
+	tx.Exec("UPDATE public.transaction_detail SET latest=? WHERE transaction_id=?;", false, entity.ID)
+
+	if tx.Error != nil {
+		return
+	}
+
+	for _, detail := range entity.TransactionDetail {
+		txDetailId := stringutil.GenerateUUID()
+		detail.ID = txDetailId
+		tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity) "+
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+			txDetailId, entity.ID, detail.ProductID, detail.BuyPrice, detail.SellPrice, detail.Quantity, entity.CreatedTime, entity.UserId, true, detail.Quantity)
+
+		if tx.Error != nil {
+			return
+		}
+	}
+
 }

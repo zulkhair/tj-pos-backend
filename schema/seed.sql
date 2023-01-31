@@ -54,7 +54,7 @@ VALUES ('web:user:createUser', 'web:user:createUser', 'Registrasi', 0, '/api/rol
        ('web:transaction:kontrabon:manage', 'web:transaction:kontrabon', 'Kelola Kontrabon', 3, '/api/kontrabon/find;/api/kontrabon/findTransaction;/api/kontrabon/create;/api/kontrabon/add;/api/kontrabon/remove;/api/kontrabon/update-lunas'),
        ('web:transaction:kontrabon:view', 'web:transaction:kontrabon', 'Lihat Kontrabon', 4, '/api/kontrabon/find'),
        ('web:transaction:status:viewstatus', 'web:transaction:status', 'Lihat Status Penjualan', 0, '/api/transaction/find'),
-       ('web:transaction:status:managestatus', 'web:transaction:status', 'Perbarui Status Penjualan', 1, '/api/transaction/find;/api/transaction/updateStatus;/api/transaction/updateBuyPrice;/api/transaction/cancelTrx'),
+       ('web:transaction:status:managestatus', 'web:transaction:status', 'Perbarui Status Penjualan', 1, '/api/transaction/find;/api/transaction/updateStatus;/api/transaction/updateBuyPrice;/api/transaction/cancelTrx;/api/transaction/update'),
        ('web:transaction:report:view', 'web:transaction:report', 'Laporan', 0, '/api/transaction/find')
 --        ('web:transaction:buy:add', 'web:transaction:buy', 'Pembelian', 0, '/api/transaction/create;/api/unit/find;/api/supplier/find;/api/product/find;/api/customer/buy-price')
 ;

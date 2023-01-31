@@ -18,7 +18,7 @@ type Transaction struct {
 	ReferenceCode     string               `json:"referenceCode"`
 	UserId            string               `json:"userId"`
 	CreatedTime       string               `json:"createdTime"`
-	Total             float64                `json:"total"`
+	Total             float64              `json:"total"`
 	TransactionDetail []*TransactionDetail `json:"transactionDetail"`
 }
 
@@ -29,8 +29,8 @@ type TransactionDetail struct {
 	ProductID     string  `json:"productId"`
 	BuyPrice      float64 `json:"buyPrice"`
 	SellPrice     float64 `json:"sellPrice"`
-	Quantity      float64   `json:"quantity"`
-	BuyQuantity   float64   `json:"buyQuantity"`
+	Quantity      float64 `json:"quantity"`
+	BuyQuantity   float64 `json:"buyQuantity"`
 }
 
 type TransactionStatus struct {
@@ -46,7 +46,7 @@ type TransactionStatus struct {
 	UserId            string                     `json:"userId"`
 	UserName          string                     `json:"userName"`
 	CreatedTime       string                     `json:"createdTime"`
-	Total             float64                      `json:"total"`
+	Total             float64                    `json:"total"`
 	TransactionDetail []*TransactionStatusDetail `json:"transactionDetail"`
 }
 
@@ -59,6 +59,6 @@ type TransactionStatusDetail struct {
 	ProductName   string  `json:"productName"`
 	BuyPrice      float64 `json:"buyPrice"`
 	SellPrice     float64 `json:"sellPrice"`
-	Quantity      float64   `json:"quantity"`
-	BuyQuantity   float64   `json:"buyQuantity"`
+	Quantity      float64 `json:"quantity"`
+	BuyQuantity   float64 `json:"buyQuantity"`
 }

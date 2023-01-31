@@ -175,3 +175,35 @@ func (h *Handler) UpdateBuyPrice(c *gin.Context) {
 
 	restutil.SendResponseOk(c, "Transaksi berhasil diperbarui", nil)
 }
+
+func (h *Handler) Update(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		logrus.Error(err.Error())
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
+	}
+
+	transaction := &transactiondomain.Transaction{}
+	err = json.Unmarshal(jsonData, transaction)
+	if err != nil {
+		logrus.Error(err.Error())
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
+	}
+
+	if transaction.ID == "" {
+		restutil.SendResponseFail(c, "Harap pilih transaksi yang akan diperbarui")
+		return
+	}
+
+	transaction.UserId = restutil.GetSession(c).UserID
+	err = h.transactionUsecase.UpdateTransaction(transaction)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+
+	restutil.SendResponseOk(c, "Transaksi berhasil diperbarui", nil)
+}

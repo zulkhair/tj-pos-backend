@@ -27,6 +27,7 @@ type TransactoionUsecase interface {
 	UpdateBuyPrice(transactionID, productID string, buyPrice, sellPrice float64, quantity, buyQuantity int64) error
 	ViewSellTransaction(startDate, endDate, code, stakeholderID, txType, status, productID, txId string) ([]*transactiondomain.TransactionStatus, error)
 	CancelTrx(transactionID string) error
+	UpdateTransaction(transaction *transactiondomain.Transaction) error
 }
 
 type Usecase struct {
@@ -371,6 +372,13 @@ func (uc *Usecase) ViewSellTransaction(startDate, endDate, code, stakeholderID, 
 		Value:    "BATAL",
 	})
 
+	param = append(param, queryutil.Param{
+		Logic:    "AND",
+		Field:    "td.latest",
+		Operator: "=",
+		Value:    "TRUE",
+	})
+
 	return uc.transactionRepo.FindSells(param)
 }
 
@@ -441,6 +449,28 @@ func (uc *Usecase) UpdateBuyPrice(transactionID, productID string, buyPrice, sel
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan update status transaksi")
+	}
+	return nil
+}
+
+func (uc *Usecase) UpdateTransaction(transaction *transactiondomain.Transaction) error {
+	tx := global.DBCON.Begin()
+
+	timeNow := time.Now()
+	transaction.CreatedTime = timeNow.Format(dateutil.TimeFormat())
+
+	uc.transactionRepo.UpdateTransaction(transaction, tx)
+	if tx.Error != nil {
+		tx.Rollback()
+		logrus.Error(tx.Error.Error())
+		return fmt.Errorf("Terjadi kesalahan saat memperbarui transaksi")
+	}
+
+	tx.Commit()
+	if tx.Error != nil {
+		tx.Rollback()
+		logrus.Error(tx.Error.Error())
+		return fmt.Errorf("Terjadi kesalahan saat memperbarui transaksi")
 	}
 	return nil
 }
