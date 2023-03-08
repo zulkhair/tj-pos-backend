@@ -175,7 +175,7 @@ func (r *Repo) FindTransaction(params []queryutil.Param) ([]*transactiondomain.T
 
 		if value, ok := entityMap[ID.String]; ok {
 			entity = value
-			entity.Total = (SellPrice.Float64) * Quantity.Float64
+			entity.Total = entity.Total + (SellPrice.Float64)*Quantity.Float64
 		} else {
 			entity = &transactiondomain.TransactionStatus{}
 			entity.ID = ID.String
@@ -190,7 +190,7 @@ func (r *Repo) FindTransaction(params []queryutil.Param) ([]*transactiondomain.T
 			entity.UserId = UserId.String
 			entity.UserName = UserName.String
 			entity.CreatedTime = CreatedTime.Format(dateutil.TimeFormatResponse())
-			entity.Total = entity.Total + ((SellPrice.Float64) * Quantity.Float64)
+			entity.Total = (SellPrice.Float64) * Quantity.Float64
 
 			entities = append(entities, entity)
 			entityMap[ID.String] = entity
@@ -216,7 +216,7 @@ func (r *Repo) FindTransaction(params []queryutil.Param) ([]*transactiondomain.T
 
 func (r *Repo) Create(entity kontrabondomain.Kontrabon, transactionIds []string) error {
 	tx := global.DBCON.Begin()
-	 r.CreateTx(entity, transactionIds, tx)
+	r.CreateTx(entity, transactionIds, tx)
 
 	if tx.Error != nil {
 		return tx.Error
@@ -277,12 +277,12 @@ func (r *Repo) UpdateLunas(kontrabonId string) error {
 	tx := global.DBCON.Begin()
 
 	tx.Exec("UPDATE public.kontrabon SET status=? WHERE id=?", kontrabondomain.STATUS_LUNAS, kontrabonId)
-	if tx.Error != nil{
+	if tx.Error != nil {
 		return tx.Error
 	}
 
 	tx.Exec("UPDATE public.transaction SET status=? WHERE id IN (SELECT kt.transaction_id FROM kontrabon_transaction kt WHERE kt.kontrabon_id = ?)", transactiondomain.TRANSACTION_DIBAYAR, kontrabonId)
-	if tx.Error != nil{
+	if tx.Error != nil {
 		tx.Rollback()
 		return tx.Error
 	}
