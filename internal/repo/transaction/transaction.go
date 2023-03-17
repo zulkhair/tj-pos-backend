@@ -145,7 +145,7 @@ func (r *Repo) FindSells(params []queryutil.Param) ([]*transactiondomain.Transac
 		"JOIN web_user w ON (w.id = t.web_user_id) "+
 		"JOIN product p ON (p.id = td.product_id) "+
 		"JOIN unit u ON (u.id = p.unit_id) "+
-		"%s ORDER BY t.date DESC", where), values...).Rows()
+		"%s ORDER BY t.date DESC, td.sorting_val ASC", where), values...).Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err
@@ -236,12 +236,12 @@ func (r *Repo) Create(entity *transactiondomain.Transaction, tx *gorm.DB) {
 		return
 	}
 
-	for _, detail := range entity.TransactionDetail {
+	for i, detail := range entity.TransactionDetail {
 		txDetailId := stringutil.GenerateUUID()
 		detail.ID = txDetailId
-		tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity) "+
-			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-			txDetailId, entity.ID, detail.ProductID, detail.BuyPrice, detail.SellPrice, detail.Quantity, entity.CreatedTime, entity.UserId, true, detail.Quantity)
+		tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity, sorting_val) "+
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+			txDetailId, entity.ID, detail.ProductID, detail.BuyPrice, detail.SellPrice, detail.Quantity, entity.CreatedTime, entity.UserId, true, detail.Quantity, i)
 
 		if tx.Error != nil {
 			return
@@ -293,12 +293,12 @@ func (r *Repo) UpdateTransaction(entity *transactiondomain.Transaction, tx *gorm
 		return
 	}
 
-	for _, detail := range entity.TransactionDetail {
+	for i, detail := range entity.TransactionDetail {
 		txDetailId := stringutil.GenerateUUID()
 		detail.ID = txDetailId
-		tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity) "+
-			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-			txDetailId, entity.ID, detail.ProductID, detail.BuyPrice, detail.SellPrice, detail.Quantity, entity.CreatedTime, entity.UserId, true, detail.Quantity)
+		tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity, sorting_val) "+
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+			txDetailId, entity.ID, detail.ProductID, detail.BuyPrice, detail.SellPrice, detail.Quantity, entity.CreatedTime, entity.UserId, true, detail.Quantity, i)
 
 		if tx.Error != nil {
 			return

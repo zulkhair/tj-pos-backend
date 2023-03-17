@@ -195,3 +195,5 @@ ALTER TABLE price_template
 ALTER TABLE price_template_detail
     ADD COLUMN checked boolean;
 
+ALTER TABLE transaction_detail
+    ADD COLUMN sorting_val SMALLINT;
