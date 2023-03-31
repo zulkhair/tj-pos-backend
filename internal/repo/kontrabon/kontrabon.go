@@ -56,12 +56,12 @@ func (r *Repo) Find(params []queryutil.Param) ([]*kontrabondomain.Kontrabon, err
 		where = "WHERE " + where
 	}
 
-	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT k.id, k.code, k.created_time, k.status, SUM(td.sell_price), customer_id "+
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT k.id, k.code, k.created_time, k.status, SUM(td.sell_price * td.quantity), customer_id "+
 		"FROM public.kontrabon k "+
 		"JOIN public.kontrabon_transaction kt ON (kt.kontrabon_id = k.id) "+
 		"JOIN public.transaction t ON (t.id = kt.transaction_id) "+
 		"JOIN public.transaction_detail td ON (td.transaction_id = t.id)"+
-		"%s GROUP BY k.id, k.code, k.created_time, k.status ORDER BY k.created_time DESC, k.code DESC", where), values...).Rows()
+		"%s GROUP BY k.id, k.code, k.created_time, k.status ORDER BY k.code DESC, k.created_time DESC", where), values...).Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err
@@ -76,7 +76,7 @@ func (r *Repo) Find(params []queryutil.Param) ([]*kontrabondomain.Kontrabon, err
 		var Code sql.NullString
 		var CreatedTime time.Time
 		var Status sql.NullString
-		var Total sql.NullInt64
+		var Total sql.NullFloat64
 		var CustomerID sql.NullString
 
 		rows.Scan(&ID, &Code, &CreatedTime, &Status, &Total, &CustomerID)
@@ -88,13 +88,14 @@ func (r *Repo) Find(params []queryutil.Param) ([]*kontrabondomain.Kontrabon, err
 
 		if value, ok := entityMap[ID.String]; ok {
 			entity = value
+			entity.Total = entity.Total + Total.Float64
 		} else {
 			entity = &kontrabondomain.Kontrabon{}
 			entity.ID = ID.String
 			entity.Code = Code.String
 			entity.CreatedTime = CreatedTime.Format(dateutil.DateFormatResponse())
 			entity.Status = Status.String
-			entity.Total = Total.Int64
+			entity.Total = Total.Float64
 			entity.CustomerID = CustomerID.String
 
 			entities = append(entities, entity)
@@ -106,6 +107,13 @@ func (r *Repo) Find(params []queryutil.Param) ([]*kontrabondomain.Kontrabon, err
 }
 
 func (r *Repo) FindTransaction(params []queryutil.Param) ([]*transactiondomain.TransactionStatus, error) {
+	params = append(params, queryutil.Param{
+		Logic:    "AND",
+		Field:    "td.latest",
+		Operator: "=",
+		Value:    "TRUE",
+	})
+
 	where := ""
 	var values []interface{}
 	for _, param := range params {
