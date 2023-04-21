@@ -197,3 +197,12 @@ ALTER TABLE price_template_detail
 
 ALTER TABLE transaction_detail
     ADD COLUMN sorting_val SMALLINT;
+
+ALTER TABLE kontrabon
+    ADD COLUMN paid_time TIMESTAMP WITHOUT TIME ZONE;
+
+ALTER TABLE kontrabon
+    ADD COLUMN total_paid TIMESTAMP NUMERIC;
+
+ALTER TABLE kontrabon
+    ADD COLUMN description VARCHAR (512);

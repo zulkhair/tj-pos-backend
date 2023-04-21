@@ -27,8 +27,9 @@ func (h *Handler) Find(c *gin.Context) {
 	startDate := c.Query("startDate")
 	endDate := c.Query("endDate")
 	code := c.Query("code")
+	customerId := c.Query("customerId")
 
-	kontrabons, err := h.kontrabonUsecase.Find(code, startDate, endDate)
+	kontrabons, err := h.kontrabonUsecase.Find(code, startDate, endDate, customerId)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return
@@ -77,7 +78,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	restutil.SendResponseOk(c, "Kontrabon berhasil ditambahkan",nil)
+	restutil.SendResponseOk(c, "Kontrabon berhasil ditambahkan", nil)
 }
 
 func (h *Handler) Add(c *gin.Context) {
@@ -97,12 +98,12 @@ func (h *Handler) Add(c *gin.Context) {
 		return
 	}
 
-	if request.KontrabonID == ""{
+	if request.KontrabonID == "" {
 		restutil.SendResponseFail(c, "Harap pilih kontrabon yang akan diperbarui")
 		return
 	}
 
-	if len(request.TransactionIDs) <= 0{
+	if len(request.TransactionIDs) <= 0 {
 		restutil.SendResponseFail(c, "Harap pilih transaksi yang akan ditambahkan")
 		return
 	}
@@ -113,7 +114,7 @@ func (h *Handler) Add(c *gin.Context) {
 		return
 	}
 
-	restutil.SendResponseOk(c, "Kontrabon berhasil diperbarui",nil)
+	restutil.SendResponseOk(c, "Kontrabon berhasil diperbarui", nil)
 }
 
 func (h *Handler) Remove(c *gin.Context) {
@@ -133,12 +134,12 @@ func (h *Handler) Remove(c *gin.Context) {
 		return
 	}
 
-	if request.KontrabonID == ""{
+	if request.KontrabonID == "" {
 		restutil.SendResponseFail(c, "Harap pilih kontrabon yang akan diperbarui")
 		return
 	}
 
-	if len(request.TransactionIDs) <= 0{
+	if len(request.TransactionIDs) <= 0 {
 		restutil.SendResponseFail(c, "Harap pilih transaksi yang akan ditambahkan")
 		return
 	}
@@ -149,7 +150,7 @@ func (h *Handler) Remove(c *gin.Context) {
 		return
 	}
 
-	restutil.SendResponseOk(c, "Kontrabon berhasil diperbarui",nil)
+	restutil.SendResponseOk(c, "Kontrabon berhasil diperbarui", nil)
 }
 
 func (h *Handler) UpdateLunas(c *gin.Context) {
@@ -160,7 +161,7 @@ func (h *Handler) UpdateLunas(c *gin.Context) {
 		return
 	}
 
-	if string(kontrabonID) == ""{
+	if string(kontrabonID) == "" {
 		restutil.SendResponseFail(c, "Harap pilih kontrabon yang akan diperbarui")
 		return
 	}
@@ -171,5 +172,5 @@ func (h *Handler) UpdateLunas(c *gin.Context) {
 		return
 	}
 
-	restutil.SendResponseOk(c, "Status kontrabon berhasil diperbarui",nil)
+	restutil.SendResponseOk(c, "Status kontrabon berhasil diperbarui", nil)
 }

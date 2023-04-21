@@ -17,7 +17,7 @@ import (
 )
 
 type KontrabonUsecase interface {
-	Find(code, startDate, endDate string) ([]*kontrabondomain.Kontrabon, error)
+	Find(code, startDate, endDate, customerId string) ([]*kontrabondomain.Kontrabon, error)
 	FindTransaction(kontrabonId string) ([]*transactiondomain.TransactionStatus, error)
 	Create(customerId string, transactionIds []string) error
 	Update(kontrabonId string, transactionIds []string, status string) error
@@ -40,7 +40,7 @@ func New(kontrabonRepo kontrabonrepo.KontrabonRepo, sequenceRepo sequencerepo.Se
 	return uc
 }
 
-func (uc *Usecase) Find(code, startDate, endDate string) ([]*kontrabondomain.Kontrabon, error) {
+func (uc *Usecase) Find(code, startDate, endDate, customerId string) ([]*kontrabondomain.Kontrabon, error) {
 	var param []queryutil.Param
 	if code != "" {
 		param = append(param, queryutil.Param{
@@ -63,6 +63,14 @@ func (uc *Usecase) Find(code, startDate, endDate string) ([]*kontrabondomain.Kon
 			Logic:    "AND",
 			Field:    "k.created_time",
 			Operator: "<=",
+			Value:    endDate,
+		})
+	}
+	if endDate != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "k.customer_id",
+			Operator: "=",
 			Value:    endDate,
 		})
 	}
@@ -96,8 +104,9 @@ func (uc *Usecase) Create(customerId string, transactionIds []string) error {
 		return fmt.Errorf("Customer dengan ID %s tidak ditemukan", customerId)
 	}
 
+	createdTime := time.Now()
 	tx := global.DBCON.Begin()
-	customerCode := customer[0].Code
+	customerCode := "KTBN/" + customer[0].Code + "/" + stringutil.ToRoman(int(createdTime.Month())) + "/" + createdTime.Format("2006")
 	code := uc.sequenceRepo.NextValTx(customerCode, tx)
 	if tx.Error != nil {
 		logrus.Error(tx.Error.Error())
@@ -106,8 +115,8 @@ func (uc *Usecase) Create(customerId string, transactionIds []string) error {
 
 	kontrabon := kontrabondomain.Kontrabon{
 		ID:          stringutil.GenerateUUID(),
-		Code:        customerCode + "/" + strconv.Itoa(int(code)),
-		CreatedTime: time.Now().Format(dateutil.DateFormat()),
+		Code:        "KTBN/" + strconv.Itoa(int(code)) + customer[0].Code + "/" + stringutil.ToRoman(int(createdTime.Month())) + "/" + createdTime.Format("2006"),
+		CreatedTime: createdTime.Format(dateutil.DateFormat()),
 		Status:      kontrabondomain.STATUS_CREATED,
 		CustomerID:  customerId,
 	}
