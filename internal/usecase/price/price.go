@@ -118,6 +118,7 @@ func (uc *Usecase) EditPrice(templateId, productId string, price float64) error 
 }
 
 func (uc *Usecase) ApplyToCustomer(templateId string, customerId []string, userId string) error {
+	date := time.Now().UTC().Format(dateutil.TimeFormat())
 	priceDetail, err := uc.priceRepo.FindDetail(map[string]interface{}{"ptd.price_template_id": templateId})
 	if err != nil {
 		logrus.Error(err.Error())
@@ -147,7 +148,7 @@ func (uc *Usecase) ApplyToCustomer(templateId string, customerId []string, userI
 
 			priceRequest := customerdomain.AddPriceRequest{
 				ID:            stringutil.GenerateUUID(),
-				Date:          time.Now().Format(dateutil.TimeFormat()),
+				Date:          date,
 				CustomerId:    cID,
 				UnitId:        "",
 				ProductID:     product.ID,

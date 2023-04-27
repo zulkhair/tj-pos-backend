@@ -19,7 +19,7 @@ type KontrabonRepo interface {
 	Create(entity kontrabondomain.Kontrabon, transactionIds []string) error
 	Update(kontrabonId string, transactionIds []string, status string) error
 	CreateTx(entity kontrabondomain.Kontrabon, transactionIds []string, tx *gorm.DB)
-	UpdateLunas(kontrabonId string) error
+	UpdateLunas(kontrabonId string, paymentTime time.Time, paymentValue float64, description, paymentDate string) error
 }
 
 type Repo struct {
@@ -281,10 +281,10 @@ func (r *Repo) Update(kontrabonId string, transactionIds []string, status string
 	return nil
 }
 
-func (r *Repo) UpdateLunas(kontrabonId string) error {
+func (r *Repo) UpdateLunas(kontrabonId string, paymentTime time.Time, paymentValue float64, description, paymentDate string) error {
 	tx := global.DBCON.Begin()
 
-	tx.Exec("UPDATE public.kontrabon SET status=? WHERE id=?", kontrabondomain.STATUS_LUNAS, kontrabonId)
+	tx.Exec("UPDATE public.kontrabon SET status=?, payment_update_time=?, total_payment=?, description=?, payment_date=? WHERE id=?", kontrabondomain.STATUS_LUNAS, paymentTime, paymentValue, kontrabonId, description, paymentDate)
 	if tx.Error != nil {
 		return tx.Error
 	}

@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"io/ioutil"
+	"time"
 )
 
 // Handler defines the handler
@@ -154,19 +156,33 @@ func (h *Handler) Remove(c *gin.Context) {
 }
 
 func (h *Handler) UpdateLunas(c *gin.Context) {
-	kontrabonID, err := ioutil.ReadAll(c.Request.Body)
+	now := time.Now().UTC()
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		logrus.Error(err.Error())
 		c.AbortWithError(400, fmt.Errorf("bad request"))
+	}
+
+	paymentDate := gjson.Get(string(jsonData), "paymentDate")
+	if !paymentDate.Exists() || paymentDate.String() == "" {
+		restutil.SendResponseFail(c, "Harap isi tangal pembayaran")
 		return
 	}
 
-	if string(kontrabonID) == "" {
+	kontrabonID := gjson.Get(string(jsonData), "kontabonId")
+	if !kontrabonID.Exists() || kontrabonID.String() == "" {
 		restutil.SendResponseFail(c, "Harap pilih kontrabon yang akan diperbarui")
 		return
 	}
 
-	err = h.kontrabonUsecase.UpdateLunas(string(kontrabonID))
+	totalPayment := gjson.Get(string(jsonData), "totalPayment")
+	if !totalPayment.Exists() {
+		restutil.SendResponseFail(c, "Harap isi total pembayaran")
+		return
+	}
+
+	description := gjson.Get(string(jsonData), "description")
+
+	err = h.kontrabonUsecase.UpdateLunas(kontrabonID.String(), now, totalPayment.Float(), description.String(), paymentDate.String())
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return

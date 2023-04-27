@@ -21,7 +21,7 @@ type KontrabonUsecase interface {
 	FindTransaction(kontrabonId string) ([]*transactiondomain.TransactionStatus, error)
 	Create(customerId string, transactionIds []string) error
 	Update(kontrabonId string, transactionIds []string, status string) error
-	UpdateLunas(kontrabonId string) error
+	UpdateLunas(kontrabonId string, paymentTime time.Time, totalPayment float64, description, paymentDate string) error
 }
 
 type Usecase struct {
@@ -66,12 +66,12 @@ func (uc *Usecase) Find(code, startDate, endDate, customerId string) ([]*kontrab
 			Value:    endDate,
 		})
 	}
-	if endDate != "" {
+	if customerId != "" {
 		param = append(param, queryutil.Param{
 			Logic:    "AND",
 			Field:    "k.customer_id",
 			Operator: "=",
-			Value:    endDate,
+			Value:    customerId,
 		})
 	}
 
@@ -104,7 +104,7 @@ func (uc *Usecase) Create(customerId string, transactionIds []string) error {
 		return fmt.Errorf("Customer dengan ID %s tidak ditemukan", customerId)
 	}
 
-	createdTime := time.Now()
+	createdTime := time.Now().UTC()
 	tx := global.DBCON.Begin()
 	customerCode := "KTBN/" + customer[0].Code + "/" + stringutil.ToRoman(int(createdTime.Month())) + "/" + createdTime.Format("2006")
 	code := uc.sequenceRepo.NextValTx(customerCode, tx)
@@ -142,8 +142,8 @@ func (uc *Usecase) Update(kontrabonId string, transactionIds []string, status st
 	return nil
 }
 
-func (uc *Usecase) UpdateLunas(kontrabonId string) error {
-	err := uc.kontrabonRepo.UpdateLunas(kontrabonId)
+func (uc *Usecase) UpdateLunas(kontrabonId string, paymentTime time.Time, totalPayment float64, description, paymentDate string) error {
+	err := uc.kontrabonRepo.UpdateLunas(kontrabonId, paymentTime, totalPayment, description, paymentDate)
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan perubahan status")

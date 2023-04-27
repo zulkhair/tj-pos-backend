@@ -198,7 +198,7 @@ func (uc *Usecase) UpdateBuyPrice(request supplierdomain.BuyPriceRequest) error 
 
 func (uc *Usecase) AddBuyPrice(entity supplierdomain.AddPriceRequest, userId string) error {
 	entity.ID = strings.ReplaceAll(uuid.NewString(), "-", "")
-	entity.Date = time.Now().Format(dateutil.TimeFormat())
+	entity.Date = time.Now().UTC().Format(dateutil.TimeFormat())
 	entity.WebUserId = userId
 	entity.Latest = true
 

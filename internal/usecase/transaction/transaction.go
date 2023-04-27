@@ -51,7 +51,7 @@ func New(transactionRepo transactionrepo.TransactionRepo, sequenceRepo sequencer
 func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction) (string, error) {
 	tx := global.DBCON.Begin()
 
-	timeNow := time.Now()
+	timeNow := time.Now().UTC()
 	if transaction.Date == "" {
 		transaction.Date = timeNow.Format(dateutil.DateFormat())
 	}
@@ -392,12 +392,12 @@ func (uc *Usecase) UpdateStatus(transactionID string) error {
 	})
 
 	transactions, err := uc.transactionRepo.FindSells(param)
-	if err != nil{
+	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan update status transaksi")
 	}
 
-	if transactions == nil || len(transactions) == 0{
+	if transactions == nil || len(transactions) == 0 {
 		logrus.Error("Transactions is nil or zero")
 		return fmt.Errorf("Terjadi kesalahan saat melakukan update status transaksi")
 	}
@@ -405,7 +405,7 @@ func (uc *Usecase) UpdateStatus(transactionID string) error {
 	status := transactions[0].Status
 	if status == transactiondomain.TRANSACTION_PEMBUATAN {
 		status = transactiondomain.TRANSACTION_KONTRABON
-	}else if transactions[0].Status == transactiondomain.TRANSACTION_KONTRABON {
+	} else if transactions[0].Status == transactiondomain.TRANSACTION_KONTRABON {
 		status = transactiondomain.TRANSACTION_DIBAYAR
 	}
 	err = uc.transactionRepo.UpdateStatus(transactionID, status)
@@ -426,12 +426,12 @@ func (uc *Usecase) CancelTrx(transactionID string) error {
 	})
 
 	transactions, err := uc.transactionRepo.FindSells(param)
-	if err != nil{
+	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan update status transaksi")
 	}
 
-	if transactions == nil || len(transactions) == 0{
+	if transactions == nil || len(transactions) == 0 {
 		logrus.Error("Transactions is nil or zero")
 		return fmt.Errorf("Terjadi kesalahan saat melakukan update status transaksi")
 	}
@@ -456,7 +456,7 @@ func (uc *Usecase) UpdateBuyPrice(transactionID, productID string, buyPrice, sel
 func (uc *Usecase) UpdateTransaction(transaction *transactiondomain.Transaction) error {
 	tx := global.DBCON.Begin()
 
-	timeNow := time.Now()
+	timeNow := time.Now().UTC()
 	transaction.CreatedTime = timeNow.Format(dateutil.TimeFormat())
 
 	uc.transactionRepo.UpdateTransaction(transaction, tx)

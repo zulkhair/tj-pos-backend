@@ -199,10 +199,13 @@ ALTER TABLE transaction_detail
     ADD COLUMN sorting_val SMALLINT;
 
 ALTER TABLE kontrabon
-    ADD COLUMN paid_time TIMESTAMP WITHOUT TIME ZONE;
+    ADD COLUMN payment_update_time TIMESTAMP WITHOUT TIME ZONE;
 
 ALTER TABLE kontrabon
-    ADD COLUMN total_paid TIMESTAMP NUMERIC;
+    ADD COLUMN payment_date DATE;
+
+ALTER TABLE kontrabon
+    ADD COLUMN total_payment NUMERIC;
 
 ALTER TABLE kontrabon
     ADD COLUMN description VARCHAR (512);

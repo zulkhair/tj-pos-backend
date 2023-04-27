@@ -50,7 +50,7 @@ func (uc *Usecase) EditUser(userId, name, username, role, status string) error {
 	}
 	if username != "" {
 		u := uc.webuserrepo.FindByUsername(username)
-		if u != nil{
+		if u != nil {
 			return fmt.Errorf("User dengan username '&s' sudah ada", username)
 		}
 		webuser.Username = username
@@ -121,7 +121,7 @@ func (uc *Usecase) RegisterUser(creatorId, name, username, password, roleId stri
 		Email:                 "-",
 		RoleId:                roleId,
 		Active:                true,
-		RegistrationTimestamp: time.Now(),
+		RegistrationTimestamp: time.Now().UTC(),
 		CreatedBy:             creatorId,
 	}
 
