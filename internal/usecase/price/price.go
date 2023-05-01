@@ -7,7 +7,6 @@ import (
 	customerrepo "dromatech/pos-backend/internal/repo/customer"
 	pricerepo "dromatech/pos-backend/internal/repo/price"
 	productrepo "dromatech/pos-backend/internal/repo/product"
-	dateutil "dromatech/pos-backend/internal/util/date"
 	stringutil "dromatech/pos-backend/internal/util/string"
 	"fmt"
 	"github.com/sirupsen/logrus"
@@ -118,7 +117,7 @@ func (uc *Usecase) EditPrice(templateId, productId string, price float64) error 
 }
 
 func (uc *Usecase) ApplyToCustomer(templateId string, customerId []string, userId string) error {
-	date := time.Now().UTC().Format(dateutil.TimeFormat())
+	date := time.Now().UTC()
 	priceDetail, err := uc.priceRepo.FindDetail(map[string]interface{}{"ptd.price_template_id": templateId})
 	if err != nil {
 		logrus.Error(err.Error())

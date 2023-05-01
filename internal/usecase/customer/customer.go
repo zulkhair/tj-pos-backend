@@ -2,7 +2,6 @@ package customerusecase
 
 import (
 	customerdomain "dromatech/pos-backend/internal/domain/customer"
-	dateutil "dromatech/pos-backend/internal/util/date"
 	queryutil "dromatech/pos-backend/internal/util/query"
 	"fmt"
 	"github.com/google/uuid"
@@ -198,7 +197,7 @@ func (uc *Usecase) UpdateSellPrice(request customerdomain.SellPriceRequest) erro
 
 func (uc *Usecase) AddSellPrice(entity customerdomain.AddPriceRequest, userId string) error {
 	entity.ID = strings.ReplaceAll(uuid.NewString(), "-", "")
-	entity.Date = time.Now().Format(dateutil.TimeFormat())
+	entity.Date = time.Now()
 	entity.WebUserId = userId
 	entity.Latest = true
 

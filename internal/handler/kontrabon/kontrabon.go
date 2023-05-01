@@ -162,15 +162,15 @@ func (h *Handler) UpdateLunas(c *gin.Context) {
 		c.AbortWithError(400, fmt.Errorf("bad request"))
 	}
 
-	paymentDate := gjson.Get(string(jsonData), "paymentDate")
-	if !paymentDate.Exists() || paymentDate.String() == "" {
-		restutil.SendResponseFail(c, "Harap isi tangal pembayaran")
+	kontrabonID := gjson.Get(string(jsonData), "kontrabonId")
+	if !kontrabonID.Exists() || kontrabonID.String() == "" {
+		restutil.SendResponseFail(c, "Harap pilih kontrabon yang akan diperbarui")
 		return
 	}
 
-	kontrabonID := gjson.Get(string(jsonData), "kontabonId")
-	if !kontrabonID.Exists() || kontrabonID.String() == "" {
-		restutil.SendResponseFail(c, "Harap pilih kontrabon yang akan diperbarui")
+	paymentDate := gjson.Get(string(jsonData), "paymentDate")
+	if !paymentDate.Exists() || paymentDate.String() == "" {
+		restutil.SendResponseFail(c, "Harap isi tangal pembayaran")
 		return
 	}
 

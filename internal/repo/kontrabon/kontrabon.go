@@ -14,7 +14,7 @@ import (
 )
 
 type KontrabonRepo interface {
-	Find(params []queryutil.Param) ([]*kontrabondomain.Kontrabon, error)
+	Find(params []queryutil.Param) ([]*kontrabondomain.KontrabonResponse, error)
 	FindTransaction(params []queryutil.Param) ([]*transactiondomain.TransactionStatus, error)
 	Create(entity kontrabondomain.Kontrabon, transactionIds []string) error
 	Update(kontrabonId string, transactionIds []string, status string) error
@@ -30,7 +30,7 @@ func New() *Repo {
 	return repo
 }
 
-func (r *Repo) Find(params []queryutil.Param) ([]*kontrabondomain.Kontrabon, error) {
+func (r *Repo) Find(params []queryutil.Param) ([]*kontrabondomain.KontrabonResponse, error) {
 	params = append(params, queryutil.Param{
 		Logic:    "AND",
 		Field:    "td.latest",
@@ -56,20 +56,20 @@ func (r *Repo) Find(params []queryutil.Param) ([]*kontrabondomain.Kontrabon, err
 		where = "WHERE " + where
 	}
 
-	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT k.id, k.code, k.created_time, k.status, SUM(td.sell_price * td.quantity), customer_id "+
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT k.id, k.code, k.created_time, k.status, SUM(td.sell_price * td.quantity), customer_id, payment_date, total_payment "+
 		"FROM public.kontrabon k "+
 		"JOIN public.kontrabon_transaction kt ON (kt.kontrabon_id = k.id) "+
 		"JOIN public.transaction t ON (t.id = kt.transaction_id) "+
 		"JOIN public.transaction_detail td ON (td.transaction_id = t.id)"+
-		"%s GROUP BY k.id, k.code, k.created_time, k.status ORDER BY k.code DESC, k.created_time DESC", where), values...).Rows()
+		"%s GROUP BY k.id, k.code, k.created_time, k.status ORDER BY k.code ASC, k.created_time ASC", where), values...).Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err
 	}
 	defer rows.Close()
 
-	var entities []*kontrabondomain.Kontrabon
-	entityMap := make(map[string]*kontrabondomain.Kontrabon)
+	var entities []*kontrabondomain.KontrabonResponse
+	entityMap := make(map[string]*kontrabondomain.KontrabonResponse)
 	for rows.Next() {
 
 		var ID sql.NullString
@@ -78,10 +78,12 @@ func (r *Repo) Find(params []queryutil.Param) ([]*kontrabondomain.Kontrabon, err
 		var Status sql.NullString
 		var Total sql.NullFloat64
 		var CustomerID sql.NullString
+		var PaymentDate time.Time
+		var TotalPayment sql.NullFloat64
 
-		rows.Scan(&ID, &Code, &CreatedTime, &Status, &Total, &CustomerID)
+		rows.Scan(&ID, &Code, &CreatedTime, &Status, &Total, &CustomerID, &PaymentDate, &TotalPayment)
 
-		var entity *kontrabondomain.Kontrabon
+		var entity *kontrabondomain.KontrabonResponse
 		if !ID.Valid && ID.String == "" {
 			return nil, nil
 		}
@@ -90,13 +92,19 @@ func (r *Repo) Find(params []queryutil.Param) ([]*kontrabondomain.Kontrabon, err
 			entity = value
 			entity.Total = entity.Total + Total.Float64
 		} else {
-			entity = &kontrabondomain.Kontrabon{}
+			entity = &kontrabondomain.KontrabonResponse{}
 			entity.ID = ID.String
 			entity.Code = Code.String
 			entity.CreatedTime = CreatedTime.Format(dateutil.DateFormatResponse())
 			entity.Status = Status.String
 			entity.Total = Total.Float64
 			entity.CustomerID = CustomerID.String
+			if !PaymentDate.IsZero() {
+				entity.PaymentDate = PaymentDate.Format(dateutil.DateFormatResponse())
+			}
+			if TotalPayment.Valid {
+				entity.TotalPayment = TotalPayment.Float64
+			}
 
 			entities = append(entities, entity)
 		}
@@ -284,7 +292,7 @@ func (r *Repo) Update(kontrabonId string, transactionIds []string, status string
 func (r *Repo) UpdateLunas(kontrabonId string, paymentTime time.Time, paymentValue float64, description, paymentDate string) error {
 	tx := global.DBCON.Begin()
 
-	tx.Exec("UPDATE public.kontrabon SET status=?, payment_update_time=?, total_payment=?, description=?, payment_date=? WHERE id=?", kontrabondomain.STATUS_LUNAS, paymentTime, paymentValue, kontrabonId, description, paymentDate)
+	tx.Exec("UPDATE public.kontrabon SET status=?, payment_update_time=?, total_payment=?, description=?, payment_date=? WHERE id=?", kontrabondomain.STATUS_LUNAS, paymentTime, paymentValue, description, paymentDate, kontrabonId)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -296,5 +304,9 @@ func (r *Repo) UpdateLunas(kontrabonId string, paymentTime time.Time, paymentVal
 	}
 
 	tx.Commit()
+	if tx.Error != nil {
+		tx.Rollback()
+		return tx.Error
+	}
 	return nil
 }

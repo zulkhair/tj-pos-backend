@@ -199,7 +199,7 @@ ALTER TABLE transaction_detail
     ADD COLUMN sorting_val SMALLINT;
 
 ALTER TABLE kontrabon
-    ADD COLUMN payment_update_time TIMESTAMP WITHOUT TIME ZONE;
+    ADD COLUMN payment_update_time TIMESTAMP WITH TIME ZONE;
 
 ALTER TABLE kontrabon
     ADD COLUMN payment_date DATE;

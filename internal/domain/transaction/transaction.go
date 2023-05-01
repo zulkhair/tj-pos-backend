@@ -1,5 +1,7 @@
 package transactiondomain
 
+import "time"
+
 const TRANSACTION_TYPE_BUY = "BUY"
 const TRANSACTION_TYPE_SELL = "SELL"
 const TRANSACTION_PEMBUATAN = "PEMBUATAN"
@@ -17,7 +19,7 @@ type Transaction struct {
 	Status            string               `json:"status"`
 	ReferenceCode     string               `json:"referenceCode"`
 	UserId            string               `json:"userId"`
-	CreatedTime       string               `json:"createdTime"`
+	CreatedTime       time.Time            `json:"createdTime"`
 	Total             float64              `json:"total"`
 	TransactionDetail []*TransactionDetail `json:"transactionDetail"`
 }

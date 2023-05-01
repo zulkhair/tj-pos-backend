@@ -86,7 +86,7 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 	transaction.ID = transactionID
 	transaction.Code = transactionCode
 	transaction.Status = transactiondomain.TRANSACTION_PEMBUATAN
-	transaction.CreatedTime = timeNow.Format(dateutil.TimeFormat())
+	transaction.CreatedTime = timeNow
 
 	uc.transactionRepo.Create(transaction, tx)
 
@@ -129,7 +129,7 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 				}
 				uc.supplierRepo.AddBuyPriceTx(supplierdomain.AddPriceRequest{
 					ID:            strings.ReplaceAll(uuid.NewString(), "-", ""),
-					Date:          timeNow.Format(dateutil.TimeFormat()),
+					Date:          timeNow,
 					UnitId:        detail.UnitID,
 					ProductID:     detail.ProductID,
 					Price:         detail.BuyPrice,
@@ -147,7 +147,7 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 			}
 			uc.supplierRepo.AddBuyPriceTx(supplierdomain.AddPriceRequest{
 				ID:            strings.ReplaceAll(uuid.NewString(), "-", ""),
-				Date:          timeNow.Format(dateutil.TimeFormat()),
+				Date:          timeNow,
 				UnitId:        detail.UnitID,
 				ProductID:     detail.ProductID,
 				Price:         detail.BuyPrice,
@@ -195,7 +195,7 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 				}
 				uc.customerRepo.AddSellPriceTx(customerdomain.AddPriceRequest{
 					ID:            strings.ReplaceAll(uuid.NewString(), "-", ""),
-					Date:          timeNow.Format(dateutil.TimeFormat()),
+					Date:          timeNow,
 					UnitId:        detail.UnitID,
 					ProductID:     detail.ProductID,
 					Price:         detail.SellPrice,
@@ -214,7 +214,7 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 			}
 			uc.customerRepo.AddSellPriceTx(customerdomain.AddPriceRequest{
 				ID:            strings.ReplaceAll(uuid.NewString(), "-", ""),
-				Date:          timeNow.Format(dateutil.TimeFormat()),
+				Date:          timeNow,
 				UnitId:        detail.UnitID,
 				ProductID:     detail.ProductID,
 				Price:         detail.SellPrice,
@@ -457,7 +457,7 @@ func (uc *Usecase) UpdateTransaction(transaction *transactiondomain.Transaction)
 	tx := global.DBCON.Begin()
 
 	timeNow := time.Now().UTC()
-	transaction.CreatedTime = timeNow.Format(dateutil.TimeFormat())
+	transaction.CreatedTime = timeNow
 
 	uc.transactionRepo.UpdateTransaction(transaction, tx)
 	if tx.Error != nil {

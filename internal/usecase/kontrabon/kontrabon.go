@@ -7,7 +7,6 @@ import (
 	customerrepo "dromatech/pos-backend/internal/repo/customer"
 	kontrabonrepo "dromatech/pos-backend/internal/repo/kontrabon"
 	sequencerepo "dromatech/pos-backend/internal/repo/sequence"
-	dateutil "dromatech/pos-backend/internal/util/date"
 	queryutil "dromatech/pos-backend/internal/util/query"
 	stringutil "dromatech/pos-backend/internal/util/string"
 	"fmt"
@@ -17,7 +16,7 @@ import (
 )
 
 type KontrabonUsecase interface {
-	Find(code, startDate, endDate, customerId string) ([]*kontrabondomain.Kontrabon, error)
+	Find(code, startDate, endDate, customerId string) ([]*kontrabondomain.KontrabonResponse, error)
 	FindTransaction(kontrabonId string) ([]*transactiondomain.TransactionStatus, error)
 	Create(customerId string, transactionIds []string) error
 	Update(kontrabonId string, transactionIds []string, status string) error
@@ -40,7 +39,7 @@ func New(kontrabonRepo kontrabonrepo.KontrabonRepo, sequenceRepo sequencerepo.Se
 	return uc
 }
 
-func (uc *Usecase) Find(code, startDate, endDate, customerId string) ([]*kontrabondomain.Kontrabon, error) {
+func (uc *Usecase) Find(code, startDate, endDate, customerId string) ([]*kontrabondomain.KontrabonResponse, error) {
 	var param []queryutil.Param
 	if code != "" {
 		param = append(param, queryutil.Param{
@@ -115,8 +114,8 @@ func (uc *Usecase) Create(customerId string, transactionIds []string) error {
 
 	kontrabon := kontrabondomain.Kontrabon{
 		ID:          stringutil.GenerateUUID(),
-		Code:        "KTBN/" + strconv.Itoa(int(code)) + customer[0].Code + "/" + stringutil.ToRoman(int(createdTime.Month())) + "/" + createdTime.Format("2006"),
-		CreatedTime: createdTime.Format(dateutil.DateFormat()),
+		Code:        "KTBN/" + strconv.Itoa(int(code)) + "/" + customer[0].Code + "/" + stringutil.ToRoman(int(createdTime.Month())) + "/" + createdTime.Format("2006"),
+		CreatedTime: createdTime,
 		Status:      kontrabondomain.STATUS_CREATED,
 		CustomerID:  customerId,
 	}
