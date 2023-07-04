@@ -298,7 +298,7 @@ func (r *Repo) UpdateTransaction(entity *transactiondomain.Transaction, tx *gorm
 		detail.ID = txDetailId
 		tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity, sorting_val) "+
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-			txDetailId, entity.ID, detail.ProductID, detail.BuyPrice, detail.SellPrice, detail.Quantity, entity.CreatedTime, entity.UserId, true, detail.Quantity, i)
+			txDetailId, entity.ID, detail.ProductID, detail.BuyPrice, detail.SellPrice, detail.Quantity, entity.CreatedTime, entity.UserId, true, detail.BuyQuantity, i)
 
 		if tx.Error != nil {
 			return

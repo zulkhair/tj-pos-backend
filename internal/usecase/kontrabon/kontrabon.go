@@ -105,8 +105,7 @@ func (uc *Usecase) Create(customerId string, transactionIds []string) error {
 
 	createdTime := time.Now().UTC()
 	tx := global.DBCON.Begin()
-	customerCode := "KTBN/" + customer[0].Code + "/" + stringutil.ToRoman(int(createdTime.Month())) + "/" + createdTime.Format("2006")
-	code := uc.sequenceRepo.NextValTx(customerCode, tx)
+	code := uc.sequenceRepo.NextValTx(customer[0].Code, tx)
 	if tx.Error != nil {
 		logrus.Error(tx.Error.Error())
 		return fmt.Errorf("Terjadi kesalahan saat pembuatan kontrabon")
