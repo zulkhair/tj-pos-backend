@@ -102,6 +102,11 @@ VALUES ('LOGIN_URL', 'http://localhost/login.html'),
 INSERT INTO public.unit(id, code, description, active) VALUES ('KG', 'Kg', 'Kilogram', true);
 INSERT INTO public.unit(id, code, description, active) VALUES ('PACK', 'Pack', 'Pack', true);
 INSERT INTO public.unit(id, code, description, active) VALUES ('PCS', 'Pcs', 'Pcs', true);
+INSERT INTO public.unit(id, code, description, active) VALUES ('BOX', 'Box', 'Box', true);
+INSERT INTO public.unit(id, code, description, active) VALUES ('PAPAN', 'Papan', 'Papan', true);
+INSERT INTO public.unit(id, code, description, active) VALUES ('LTR', 'Ltr', 'Ltr', true);
+INSERT INTO public.unit(id, code, description, active) VALUES ('SACHET', 'Sachet', 'Sachet', true);
+INSERT INTO public.unit(id, code, description, active) VALUES ('CAN', 'Can', 'Can', true);
 
 INSERT INTO public.product(id, unit_id, code, name, description, active)VALUES ('1','KG','Anggur Import Hijau','Anggur Import Hijau','Anggur Import Hijau',TRUE);
 INSERT INTO public.product(id, unit_id, code, name, description, active)VALUES ('2','KG','Anggur Import Merah','Anggur Import Merah','Anggur Import Merah',TRUE);
