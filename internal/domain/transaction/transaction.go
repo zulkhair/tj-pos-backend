@@ -1,6 +1,8 @@
 package transactiondomain
 
-import "time"
+import (
+	"time"
+)
 
 const TRANSACTION_TYPE_BUY = "BUY"
 const TRANSACTION_TYPE_SELL = "SELL"
@@ -63,4 +65,65 @@ type TransactionStatusDetail struct {
 	SellPrice     float64 `json:"sellPrice"`
 	Quantity      float64 `json:"quantity"`
 	BuyQuantity   float64 `json:"buyQuantity"`
+}
+
+type ReportDate struct {
+	Date    string    `json:"date"`
+	Reports []*Report `json:"reports"`
+}
+
+type Report struct {
+	Code          string          `json:"code"`
+	ReferenceCode string          `json:"referenceCode"`
+	Status        string          `json:"status"`
+	ReportDetails []*ReportDetail `json:"reportDetails"`
+}
+
+type ReportDetail struct {
+	ID          string  `json:"id"`
+	ProductCode string  `json:"productCode"`
+	ProductName string  `json:"productName"`
+	BuyPrice    float64 `json:"buyPrice"`
+	SellPrice   float64 `json:"sellPrice"`
+	Quantity    float64 `json:"quantity"`
+	BuyQuantity float64 `json:"buyQuantity"`
+}
+
+type UpdateHargaBeliRequest struct {
+	TransactionDetailID string `json:"transactionDetailId"`
+	BuyPrice            int64  `json:"buyPrice"`
+	WebUserID           string `json:"-"`
+}
+
+type TransactionBuy struct {
+	ID            string    `json:"id"`
+	TransactionID string    `json:"transactionId"`
+	ProductID     string    `json:"productId"`
+	Quantity      int64     `json:"quantity"`
+	Price         int64     `json:"price"`
+	PaymentMethod string    `json:"paymentMethod"`
+	CreatedTime   time.Time `json:"createdTime"`
+	WebUserID     string    `json:"-"`
+}
+
+type InsertTransactionBuyRequestBulk struct {
+	TransactionID string                        `json:"transactionId"`
+	Details       []InsertTransactionBuyRequest `json:"details"`
+	WebUserID     string                        `json:"-"`
+}
+
+type InsertTransactionBuyRequest struct {
+	ProductID     string `json:"productId"`
+	Quantity      int64  `json:"quantity"`
+	Price         int64  `json:"price"`
+	PaymentMethod string `json:"paymentMethod"`
+}
+
+type TransactionBuyStatus struct {
+	ID           string `json:"id"`
+	Code         string `json:"code"`
+	CustomerCode string `json:"customerCode"`
+	CustomerName string `json:"customerName"`
+	TotalBuy     int64  `json:"totalBuy"`
+	TotalSell    int64  `json:"totalSell"`
 }

@@ -19,7 +19,7 @@ VALUES ('web:user:createUser', 'web:user', 'Tambah Data', 0, '/user/register-use
        ('web:role:createRole', 'web:role', 'Tambah Data', 0, '/role/create-role.html', 'fas fa-plus'),
        ('web:role:editRole', 'web:role', 'Ubah Data', 1, '/role/edit-role.html', 'fas fa-pen'),
        ('web:masterdata:product', 'web:masterdata', 'Produk', 0, '/master/product.html', 'fas fa-seedling'),
---        ('web:masterdata:supplier', 'web:masterdata', 'Supplier', 1, '/master/supplier.html', 'fas fa-people-carry-box'),
+       ('web:masterdata:supplier', 'web:masterdata', 'Supplier', 1, '/master/supplier.html', 'fas fa-people-carry-box'),
        ('web:masterdata:customer', 'web:masterdata', 'Customer', 2, '/master/customer.html', 'fas fa-user-tag'),
        ('web:price:buy', 'web:masterdata', 'Harga Beli', 3, '/price/buy.html', 'fas fa-cart-shopping'),
        ('web:price:sell', 'web:masterdata', 'Harga Jual', 4, '/price/sell.html', 'fas fa-cash-register'),
@@ -27,7 +27,7 @@ VALUES ('web:user:createUser', 'web:user', 'Tambah Data', 0, '/user/register-use
        ('web:transaction:sell', 'web:transaction', 'Penjualan', 2, '/transaction/sell.html', 'fas fa-money-check'),
        ('web:transaction:status', 'web:transaction', 'Status', 3, '/transaction/status.html', 'fas fa-clipboard-list'),
        ('web:transaction:kontrabon', 'web:transaction', 'Kontrabon', 3, '/transaction/kontrabon.html', 'fas fa-clipboard-list'),
---        ('web:transaction:buy', 'web:transaction', 'Pembelian', 1, '/transaction/buy.html', 'fas fa-bag-shopping'),
+       ('web:transaction:buy', 'web:transaction', 'Pembelian', 1, '/transaction/buy.html', 'fas fa-bag-shopping'),
        ('web:transaction:report', 'web:transaction', 'Laporan Transaksi', 4, '/transaction/report.html', 'fas fa-coins')
 ;
 
@@ -41,9 +41,9 @@ VALUES ('web:user:createUser', 'web:user:createUser', 'Registrasi', 0, '/api/rol
        ('web:masterdata:product:add', 'web:masterdata:product', 'Tambah Data Produk', 0, '/api/product/find;/api/product/create;/api/auth/check;/api/unit/findActive'),
        ('web:masterdata:product:view', 'web:masterdata:product', 'Lihat Data Produk', 1, '/api/product/find;/api/auth/check'),
        ('web:masterdata:product:edit', 'web:masterdata:product', 'Perbarui Data Produk', 2, '/api/product/find;/api/product/edit;/api/auth/check;/api/unit/findActive'),
---        ('web:masterdata:supplier:add', 'web:masterdata:supplier', 'Tambah Data Supplier', 0, '/api/supplier/find;/api/supplier/create;/api/auth/check'),
---        ('web:masterdata:supplier:view', 'web:masterdata:supplier', 'Lihat Data Supplier', 1, '/api/supplier/find;/api/auth/check'),
---        ('web:masterdata:supplier:edit', 'web:masterdata:supplier', 'Perbarui Data Supplier', 2, '/api/supplier/find;/api/supplier/edit;/api/auth/check'),
+       ('web:masterdata:supplier:add', 'web:masterdata:supplier', 'Tambah Data Supplier', 0, '/api/supplier/find;/api/supplier/create;/api/auth/check'),
+       ('web:masterdata:supplier:view', 'web:masterdata:supplier', 'Lihat Data Supplier', 1, '/api/supplier/find;/api/auth/check'),
+       ('web:masterdata:supplier:edit', 'web:masterdata:supplier', 'Perbarui Data Supplier', 2, '/api/supplier/find;/api/supplier/edit;/api/auth/check'),
        ('web:masterdata:customer:add', 'web:masterdata:customer', 'Tambah Data Customer', 0, '/api/customer/find;/api/customer/create;/api/auth/check'),
        ('web:masterdata:customer:view', 'web:masterdata:customer', 'Lihat Data Customer', 1, '/api/customer/find;/api/auth/check'),
        ('web:masterdata:customer:edit', 'web:masterdata:customer', 'Perbarui Data Customer', 2, '/api/customer/find;/api/customer/edit;/api/auth/check'),
@@ -55,8 +55,9 @@ VALUES ('web:user:createUser', 'web:user:createUser', 'Registrasi', 0, '/api/rol
        ('web:transaction:kontrabon:view', 'web:transaction:kontrabon', 'Lihat Kontrabon', 4, '/api/kontrabon/find'),
        ('web:transaction:status:viewstatus', 'web:transaction:status', 'Lihat Status Penjualan', 0, '/api/transaction/find'),
        ('web:transaction:status:managestatus', 'web:transaction:status', 'Perbarui Status Penjualan', 1, '/api/transaction/find;/api/transaction/updateStatus;/api/transaction/updateBuyPrice;/api/transaction/cancelTrx;/api/transaction/update'),
-       ('web:transaction:report:view', 'web:transaction:report', 'Laporan', 0, '/api/transaction/find')
---        ('web:transaction:buy:add', 'web:transaction:buy', 'Pembelian', 0, '/api/transaction/create;/api/unit/find;/api/supplier/find;/api/product/find;/api/customer/buy-price')
+       ('web:transaction:report:view', 'web:transaction:report', 'Laporan', 0, '/api/transaction/find;/api/transaction/report'),
+       ('web:transaction:report:updatebuyprice', 'web:transaction:report', 'Ubah Harga Beli', 0, '/api/transaction/find;/api/transaction/report;/api/transaction/updateHargaBeli'),
+       ('web:transaction:buy:add', 'web:transaction:buy', 'Pembelian', 0, '/api/transaction/insertTransactionBuy;/api/unit/find;/api/supplier/find;/api/product/find;')
 ;
 
 ----------------- ROLE ---------------

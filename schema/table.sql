@@ -95,12 +95,12 @@ CREATE TABLE public.customer
 );
 CREATE TABLE public.transaction
 (
-    id               VARCHAR(32)  NOT NULL PRIMARY KEY,
-    code             VARCHAR(128) NOT NULL UNIQUE,
+    id               VARCHAR(32)                 NOT NULL PRIMARY KEY,
+    code             VARCHAR(128)                NOT NULL UNIQUE,
     date             TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    stakeholder_id   VARCHAR(32)  NOT NULL,
-    transaction_type VARCHAR(16)  NOT NULL,
-    status           VARCHAR(16)  NOT NULL,
+    stakeholder_id   VARCHAR(32)                 NOT NULL,
+    transaction_type VARCHAR(16)                 NOT NULL,
+    status           VARCHAR(16)                 NOT NULL,
     reference_code   VARCHAR(128),
     web_user_id      VARCHAR(32),
     created_time     TIMESTAMP WITHOUT TIME ZONE NOT NULL,
@@ -176,21 +176,21 @@ CREATE TABLE public.kontrabon_transaction
 );
 CREATE TABLE public.price_template
 (
-    id         VARCHAR(32) PRIMARY KEY,
-    name       VARCHAR(256) NOT NULL
+    id   VARCHAR(32) PRIMARY KEY,
+    name VARCHAR(256) NOT NULL
 );
 CREATE TABLE public.price_template_detail
 (
-    id                     VARCHAR(32) PRIMARY KEY,
+    id                VARCHAR(32) PRIMARY KEY,
     price_template_id VARCHAR(32) NOT NULL,
-    product_id             VARCHAR(32) NOT NULL,
-    price                  NUMERIC     NOT NULL,
+    product_id        VARCHAR(32) NOT NULL,
+    price             NUMERIC     NOT NULL,
     FOREIGN KEY (product_id) REFERENCES public.product (id),
     FOREIGN KEY (price_template_id) REFERENCES public.price_template (id)
 );
 
 ALTER TABLE price_template
-    ADD COLUMN applied_to VARCHAR (512);
+    ADD COLUMN applied_to VARCHAR(512);
 
 ALTER TABLE price_template_detail
     ADD COLUMN checked boolean;
@@ -208,4 +208,20 @@ ALTER TABLE kontrabon
     ADD COLUMN total_payment NUMERIC;
 
 ALTER TABLE kontrabon
-    ADD COLUMN description VARCHAR (512);
+    ADD COLUMN description VARCHAR(512);
+
+CREATE TABLE public.transaction_buy
+(
+    id             VARCHAR(32) PRIMARY KEY,
+    transaction_id VARCHAR(32) NOT NULL,
+    product_id     VARCHAR(32) NOT NULL,
+    price          NUMERIC     NOT NULL,
+    quantity       SMALLINT    NOT NULL,
+    payment_method VARCHAR(32) NOT NULL,
+    created_time   TIMESTAMP WITH TIME ZONE NOT NULL,
+    web_user_id    VARCHAR(32) NOT NULL,
+    latest         BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (web_user_id) REFERENCES public.web_user (id),
+    FOREIGN KEY (transaction_id) REFERENCES public.transaction (id),
+    FOREIGN KEY (product_id) REFERENCES public.product (id)
+);

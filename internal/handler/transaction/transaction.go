@@ -204,6 +204,112 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-
 	restutil.SendResponseOk(c, "Transaksi berhasil diperbarui", nil)
+}
+func (h *Handler) FindReport(c *gin.Context) {
+	startDate := c.Query("startDate")
+	endDate := c.Query("endDate")
+	code := c.Query("code")
+	stakeholderID := c.Query("stakeholderId")
+	txType := c.Query("txType")
+	status := c.Query("status")
+	productID := c.Query("productId")
+	txId := c.Query("txId")
+
+	reports, err := h.transactionUsecase.FindReport(startDate, endDate, code, stakeholderID, txType, status, productID, txId)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "", reports)
+}
+
+func (h *Handler) UpdateHargaBeli(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		logrus.Error(err.Error())
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
+	}
+
+	requestBody := &transactiondomain.UpdateHargaBeliRequest{}
+	err = json.Unmarshal(jsonData, requestBody)
+	if err != nil {
+		logrus.Error(err.Error())
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
+	}
+
+	if requestBody.TransactionDetailID == "" {
+		restutil.SendResponseFail(c, "Harap pilih data yang akan diperbarui")
+		return
+	}
+
+	if requestBody.BuyPrice <= 0 {
+		restutil.SendResponseFail(c, "Harap isi harga beli")
+		return
+	}
+
+	requestBody.WebUserID = restutil.GetSession(c).UserID
+	err = h.transactionUsecase.UpdateHargaBeli(*requestBody)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "Harga beli berhasil diperbarui", nil)
+}
+
+func (h *Handler) InsertTransactionBuy(c *gin.Context) {
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		logrus.Error(err.Error())
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
+	}
+
+	requestBody := &transactiondomain.InsertTransactionBuyRequestBulk{}
+	err = json.Unmarshal(jsonData, requestBody)
+	if err != nil {
+		logrus.Error(err.Error())
+		c.AbortWithError(400, fmt.Errorf("bad request"))
+		return
+	}
+
+	if requestBody.TransactionID == "" {
+		restutil.SendResponseFail(c, "Harap pilih data transaksi yang akan diperbarui")
+		return
+	}
+
+	if len(requestBody.Details) == 0 {
+		restutil.SendResponseFail(c, "Harap pilih produk")
+		return
+	}
+
+	for _, detail := range requestBody.Details {
+		if detail.ProductID == "" {
+			restutil.SendResponseFail(c, "Harap pilih produk")
+			return
+		}
+
+		if detail.Quantity <= 0 {
+			restutil.SendResponseFail(c, "Harap isi jumlah beli")
+			return
+		}
+
+		if detail.Price <= 0 {
+			restutil.SendResponseFail(c, "Harap isi harga beli")
+			return
+		}
+	}
+
+	requestBody.WebUserID = restutil.GetSession(c).UserID
+	err = h.transactionUsecase.InsertTransactionBuy(*requestBody)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "Harga beli berhasil diperbarui", nil)
 }

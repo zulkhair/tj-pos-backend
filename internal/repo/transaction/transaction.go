@@ -21,6 +21,10 @@ type TransactionRepo interface {
 	UpdatePrice(transactionID, productID string, buyPrice, sellPrice float64, quantity, buyQuantity int64) error
 	FindSells(params []queryutil.Param) ([]*transactiondomain.TransactionStatus, error)
 	UpdateTransaction(entity *transactiondomain.Transaction, tx *gorm.DB)
+	FindReport(params []queryutil.Param) ([]*transactiondomain.ReportDate, error)
+	UpdateHargaBeli(transactionDetailID string, buyPrice int64, webUserID string) error
+	InsertTransactionBuy(transactionId string, transactionBuy []transactiondomain.TransactionBuy) error
+	FindTransactionBuyStatus() ([]transactiondomain.TransactionBuyStatus, error)
 }
 
 type Repo struct {
@@ -305,4 +309,187 @@ func (r *Repo) UpdateTransaction(entity *transactiondomain.Transaction, tx *gorm
 		}
 	}
 
+}
+
+func (r *Repo) FindReport(params []queryutil.Param) ([]*transactiondomain.ReportDate, error) {
+	where := ""
+	var values []interface{}
+	for _, param := range params {
+		if where != "" {
+			logic := "AND "
+			if param.Logic != "" {
+				logic = param.Logic + " "
+			}
+			where += logic
+		}
+		where += param.Field + " " + param.Operator + " ? "
+		values = append(values, param.Value)
+	}
+
+	if where != "" {
+		where = "WHERE " + where
+	}
+
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT t.date, t.code, t.reference_code, t.status, p.code, p.name, td.buy_quantity, td.buy_price, td.quantity, td.sell_price, td.id "+
+		"FROM transaction t "+
+		"JOIN transaction_detail td ON (t.id = td.transaction_id) "+
+		"JOIN product p ON (td.product_id = p.id) "+
+		"JOIN customer c ON (t.stakeholder_id = c.id) "+
+		"%s ORDER BY t.date DESC, t.code ASC, p.id ASC", where), values...).Rows()
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var dateEntities []*transactiondomain.ReportDate
+	dateMap := make(map[string]*transactiondomain.ReportDate)
+	entityMap := make(map[string]*transactiondomain.Report)
+	for rows.Next() {
+		var Date time.Time
+		var Code sql.NullString
+		var ReferenceCode sql.NullString
+		var Status sql.NullString
+		var ProductCode sql.NullString
+		var ProductName sql.NullString
+		var BuyQuantity sql.NullFloat64
+		var BuyPrice sql.NullFloat64
+		var Quantity sql.NullFloat64
+		var SellPrice sql.NullFloat64
+		var ID sql.NullString
+
+		rows.Scan(&Date, &Code, &ReferenceCode, &Status, &ProductCode, &ProductName, &BuyQuantity, &BuyPrice, &Quantity, &SellPrice, &ID)
+
+		var dateEntity *transactiondomain.ReportDate
+		var entity *transactiondomain.Report
+		if !Code.Valid && Code.String == "" {
+			return nil, nil
+		}
+
+		dateString := Date.Format(dateutil.DateFormatResponse())
+		if value, ok := dateMap[dateString]; ok {
+			dateEntity = value
+		} else {
+			dateEntity = &transactiondomain.ReportDate{}
+			dateEntity.Date = dateString
+
+			dateEntities = append(dateEntities, dateEntity)
+			dateMap[dateString] = dateEntity
+		}
+
+		if value, ok := entityMap[Code.String]; ok {
+			entity = value
+		} else {
+			entity = &transactiondomain.Report{}
+			entity.Code = Code.String
+			entity.ReferenceCode = ReferenceCode.String
+			entity.Status = Status.String
+
+			dateEntity.Reports = append(dateEntity.Reports, entity)
+			entityMap[entity.Code] = entity
+		}
+
+		detail := &transactiondomain.ReportDetail{}
+		detail.ProductCode = ProductCode.String
+		detail.ProductName = ProductName.String
+		detail.BuyQuantity = BuyQuantity.Float64
+		detail.BuyPrice = BuyPrice.Float64
+		detail.Quantity = Quantity.Float64
+		detail.SellPrice = SellPrice.Float64
+		detail.ID = ID.String
+
+		entity.ReportDetails = append(entity.ReportDetails, detail)
+
+	}
+
+	return dateEntities, nil
+
+}
+func (r *Repo) UpdateHargaBeli(transactionDetailID string, buyPrice int64, webUserID string) error {
+	tx := global.DBCON.Begin()
+	tx.Exec("UPDATE public.transaction_detail SET latest=? WHERE id=?;", false, transactionDetailID)
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity, sorting_val) "+
+		"SELECT ?, transaction_id, product_id, ?, sell_price, quantity, ?, ?, ?, buy_quantity, sorting_val "+
+		"FROM public.transaction_detail "+
+		"WHERE id=?;", stringutil.GenerateUUID(), buyPrice, time.Now(), webUserID, true, transactionDetailID)
+
+	if tx.Error != nil {
+		tx.Rollback()
+		return tx.Error
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (r *Repo) InsertTransactionBuy(transactionId string, transactionBuys []transactiondomain.TransactionBuy) error {
+	tx := global.DBCON.Begin()
+
+	tx.Exec("UPDATE public.transaction_buy SET latest=? WHERE transaction_id=?;", false, transactionId)
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	for _, transactionBuy := range transactionBuys {
+		tx.Exec("INSERT INTO public.transaction_buy (id, transaction_id, product_id, price, quantity, payment_method, created_time, web_user_id, latest) "+
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);", transactionBuy.ID, transactionBuy.TransactionID, transactionBuy.ProductID, transactionBuy.Price, transactionBuy.Quantity, transactionBuy.PaymentMethod, transactionBuy.CreatedTime, transactionBuy.WebUserID, true)
+
+		if tx.Error != nil {
+			tx.Rollback()
+			return tx.Error
+		}
+	}
+
+	return nil
+}
+
+func (r *Repo) FindTransactionBuyStatus() ([]transactiondomain.TransactionBuyStatus, error) {
+	rows, err := global.DBCON.Raw("SELECT t.id, t.code, c.code, c.name, count(tb.id), count(td.id) " +
+		"FROM transaction t " +
+		"JOIN customer c ON (c.id = t.stakeholder_id) " +
+		"LEFT JOIN transaction_buy tb ON (tb.transaction_id = t.id) " +
+		"JOIN transaction_detail td ON (td.transaction_id = t.id) " +
+		"WHERE (tb.id IS NULL OR tb.latest = true) AND td.latest = true " +
+		"GROUP BY t.id, t.code, c.code, c.name").Rows()
+
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entities []transactiondomain.TransactionBuyStatus
+
+	for rows.Next() {
+		var ID sql.NullString
+		var Code sql.NullString
+		var CustomerCode sql.NullString
+		var CustomerName sql.NullString
+		var TotalBuy sql.NullInt64
+		var TotalSell sql.NullInt64
+
+		rows.Scan(&ID, &Code, &CustomerCode, &CustomerName, &TotalBuy, &TotalSell)
+
+		var entity transactiondomain.TransactionBuyStatus
+		if !ID.Valid && ID.String == "" {
+			return nil, nil
+		}
+
+		entity.ID = ID.String
+		entity.Code = Code.String
+		entity.CustomerCode = CustomerCode.String
+		entity.CustomerName = CustomerName.String
+		entity.TotalBuy = TotalBuy.Int64
+		entity.TotalSell = TotalSell.Int64
+
+		entities = append(entities, entity)
+	}
+
+	return entities, nil
 }

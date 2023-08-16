@@ -28,6 +28,9 @@ type TransactoionUsecase interface {
 	ViewSellTransaction(startDate, endDate, code, stakeholderID, txType, status, productID, txId string) ([]*transactiondomain.TransactionStatus, error)
 	CancelTrx(transactionID string) error
 	UpdateTransaction(transaction *transactiondomain.Transaction) error
+	FindReport(startDate, endDate, code, stakeholderID, txType, status, productID, txId string) ([]*transactiondomain.ReportDate, error)
+	UpdateHargaBeli(request transactiondomain.UpdateHargaBeliRequest) error
+	InsertTransactionBuy(request transactiondomain.InsertTransactionBuyRequestBulk) error
 }
 
 type Usecase struct {
@@ -473,4 +476,128 @@ func (uc *Usecase) UpdateTransaction(transaction *transactiondomain.Transaction)
 		return fmt.Errorf("Terjadi kesalahan saat memperbarui transaksi")
 	}
 	return nil
+}
+
+func (uc *Usecase) FindReport(startDate, endDate, code, stakeholderID, txType, status, productID, txId string) ([]*transactiondomain.ReportDate, error) {
+	var param []queryutil.Param
+	if startDate != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "t.date",
+			Operator: ">=",
+			Value:    startDate,
+		})
+	}
+	if endDate != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "t.date",
+			Operator: "<=",
+			Value:    endDate,
+		})
+	}
+	//if code != "" {
+	//	param = append(param, queryutil.Param{
+	//		Logic:    "AND",
+	//		Field:    "t.code",
+	//		Operator: "=",
+	//		Value:    code,
+	//	})
+	//}
+	if stakeholderID != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "t.stakeholder_id",
+			Operator: "=",
+			Value:    stakeholderID,
+		})
+	}
+	//if txType != "" {
+	//	param = append(param, queryutil.Param{
+	//		Logic:    "AND",
+	//		Field:    "t.transaction_type",
+	//		Operator: "=",
+	//		Value:    txType,
+	//	})
+	//}
+	if status != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "t.status",
+			Operator: "=",
+			Value:    status,
+		})
+	}
+	//if productID != "" {
+	//	param = append(param, queryutil.Param{
+	//		Logic:    "AND",
+	//		Field:    "td.product_id",
+	//		Operator: "=",
+	//		Value:    productID,
+	//	})
+	//}
+
+	//if txId != "" {
+	//	param = append(param, queryutil.Param{
+	//		Logic:    "AND",
+	//		Field:    "t.id",
+	//		Operator: "=",
+	//		Value:    txId,
+	//	})
+	//}
+
+	//param = append(param, queryutil.Param{
+	//	Logic:    "AND",
+	//	Field:    "t.status",
+	//	Operator: "<>",
+	//	Value:    "BATAL",
+	//})
+
+	param = append(param, queryutil.Param{
+		Logic:    "AND",
+		Field:    "td.latest",
+		Operator: "=",
+		Value:    "TRUE",
+	})
+
+	return uc.transactionRepo.FindReport(param)
+}
+
+func (uc *Usecase) UpdateHargaBeli(request transactiondomain.UpdateHargaBeliRequest) error {
+	err := uc.transactionRepo.UpdateHargaBeli(request.TransactionDetailID, request.BuyPrice, request.WebUserID)
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat memperbarui harga beli")
+	}
+	return nil
+}
+
+func (uc *Usecase) InsertTransactionBuy(request transactiondomain.InsertTransactionBuyRequestBulk) error {
+	now := time.Now()
+	var entities []transactiondomain.TransactionBuy
+	for _, detail := range request.Details {
+		entity := transactiondomain.TransactionBuy{
+			ID:            strings.ReplaceAll(uuid.NewString(), "-", ""),
+			TransactionID: request.TransactionID,
+			ProductID:     detail.ProductID,
+			Quantity:      detail.Quantity,
+			Price:         detail.Price,
+			PaymentMethod: detail.PaymentMethod,
+			CreatedTime:   now,
+			WebUserID:     request.WebUserID,
+		}
+
+		entities = append(entities, entity)
+	}
+
+	err := uc.transactionRepo.InsertTransactionBuy(request.TransactionID, entities)
+	if err != nil {
+		logrus.Error(err.Error())
+		return fmt.Errorf("Terjadi kesalahan saat menambahkan harga beli")
+	}
+	return nil
+}
+
+func (uc *Usecase) FindTransactionBuyStatus() ([]transactiondomain.TransactionBuyStatus, error) {
+	return uc.transactionRepo.FindTransactionBuyStatus()
 }
