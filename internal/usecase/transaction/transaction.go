@@ -527,6 +527,13 @@ func (uc *Usecase) FindReport(startDate, endDate, code, stakeholderID, txType, s
 			Operator: "=",
 			Value:    status,
 		})
+	} else {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "t.status",
+			Operator: "IN",
+			Value:    []string{transactiondomain.TRANSACTION_DICETAK, transactiondomain.TRANSACTION_PEMBUATAN, transactiondomain.TRANSACTION_KONTRABON, transactiondomain.TRANSACTION_DIBAYAR},
+		})
 	}
 	//if productID != "" {
 	//	param = append(param, queryutil.Param{

@@ -4,5 +4,5 @@ type Param struct {
 	Logic    string
 	Field    string
 	Operator string
-	Value    string
+	Value    interface{}
 }
