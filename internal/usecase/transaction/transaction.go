@@ -512,6 +512,14 @@ func (uc *Usecase) FindReport(startDate, endDate, code, stakeholderID, txType, s
 			Value:    stakeholderID,
 		})
 	}
+	if productID != "" {
+		param = append(param, queryutil.Param{
+			Logic:    "AND",
+			Field:    "p.id",
+			Operator: "=",
+			Value:    productID,
+		})
+	}
 	//if txType != "" {
 	//	param = append(param, queryutil.Param{
 	//		Logic:    "AND",
