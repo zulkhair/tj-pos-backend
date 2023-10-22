@@ -95,12 +95,12 @@ CREATE TABLE public.customer
 );
 CREATE TABLE public.transaction
 (
-    id               VARCHAR(32)                 NOT NULL PRIMARY KEY,
-    code             VARCHAR(128)                NOT NULL UNIQUE,
+    id               VARCHAR(32)  NOT NULL PRIMARY KEY,
+    code             VARCHAR(128) NOT NULL UNIQUE,
     date             TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    stakeholder_id   VARCHAR(32)                 NOT NULL,
-    transaction_type VARCHAR(16)                 NOT NULL,
-    status           VARCHAR(16)                 NOT NULL,
+    stakeholder_id   VARCHAR(32)  NOT NULL,
+    transaction_type VARCHAR(16)  NOT NULL,
+    status           VARCHAR(16)  NOT NULL,
     reference_code   VARCHAR(128),
     web_user_id      VARCHAR(32),
     created_time     TIMESTAMP WITHOUT TIME ZONE NOT NULL,
@@ -213,15 +213,54 @@ ALTER TABLE kontrabon
 CREATE TABLE public.transaction_buy
 (
     id             VARCHAR(32) PRIMARY KEY,
-    transaction_id VARCHAR(32) NOT NULL,
-    product_id     VARCHAR(32) NOT NULL,
-    price          NUMERIC     NOT NULL,
-    quantity       SMALLINT    NOT NULL,
-    payment_method VARCHAR(32) NOT NULL,
+    transaction_id VARCHAR(32)              NOT NULL,
+    product_id     VARCHAR(32)              NOT NULL,
+    price          NUMERIC                  NOT NULL,
+    quantity       SMALLINT                 NOT NULL,
+    payment_method VARCHAR(32)              NOT NULL,
     created_time   TIMESTAMP WITH TIME ZONE NOT NULL,
-    web_user_id    VARCHAR(32) NOT NULL,
+    web_user_id    VARCHAR(32)              NOT NULL,
     latest         BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (web_user_id) REFERENCES public.web_user (id),
     FOREIGN KEY (transaction_id) REFERENCES public.transaction (id),
     FOREIGN KEY (product_id) REFERENCES public.product (id)
+);
+
+CREATE TABLE public.buy_price_template
+(
+    id   VARCHAR(32) PRIMARY KEY,
+    name VARCHAR(256) NOT NULL,
+);
+
+CREATE TABLE public.buy_price_template_transaction
+(
+    id                    VARCHAR(32) PRIMARY KEY,
+    buy_price_template_id VARCHAR(32) NOT NULL,
+    transaction_id        VARCHAR(32) NOT NULL,
+    created_time          TIMESTAMP WITH TIME ZONE,
+    web_user_id           VARCHAR(32) NOT NULL,
+)
+
+CREATE TABLE public.buy_price_template_detail
+(
+    id                    VARCHAR(32) PRIMARY KEY,
+    buy_price_template_id VARCHAR(32) NOT NULL,
+    product_id            VARCHAR(32) NOT NULL,
+    price                 NUMERIC     NOT NULL,
+    checked               boolean,
+    FOREIGN KEY (product_id) REFERENCES public.product (id),
+    FOREIGN KEY (buy_price_template_id) REFERENCES public.buy_price_template (id)
+);
+
+CREATE TABLE public.audit_log
+(
+    id          VARCHAR(32) PRIMARY KEY,
+    module      VARCHAR(32)              NOT NULL,
+    module_id   VARCHAR(32)              NOT NULL,
+    snapshot    JSONB                    NOT NULL,
+    web_user_id VARCHAR(32)              NOT NULL,
+    action      VARCHAR(32)              NOT NULL,
+    action_id   VARCHAR(32)              NOT NULL,
+    created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+    FOREIGN KEY (web_user_id) REFERENCES public.web_user (id)
 );

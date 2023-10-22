@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -82,7 +82,7 @@ func (h *Handler) CheckPermission(c *gin.Context) {
 }
 
 func (h *Handler) Login(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.AbortWithError(400, fmt.Errorf("bad request"))
 	}

@@ -90,7 +90,7 @@ func StartApp() error {
 	unitUsecase := unitusecase.New(unitRepo)
 	transactionusecase := transactionusecase.New(transactionRepo, sequenceRepo, supplierRepo, customerRepo)
 	kontrabonUseccase := kontrabonusecase.New(kontrabonRepo, sequenceRepo, customerRepo)
-	priceUsecase := priceusecase.New(priceRepo, productRepo, customerRepo)
+	priceUsecase := priceusecase.New(priceRepo, productRepo, customerRepo, transactionRepo)
 
 	// init Handler
 	pingHandler := pinghandler.New()

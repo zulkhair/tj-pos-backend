@@ -83,5 +83,14 @@ func newRoutes(appHandler AppHandler) *gin.Engine {
 	router.POST("/api/price/template/copy", appHandler.priceHandler.CopyTemplate)
 	router.POST("/api/price/template/download", appHandler.priceHandler.Download)
 
+	router.GET("/api/price/buytemplate/find", appHandler.priceHandler.FindBuy)
+	router.GET("/api/price/buytemplate/findDetail", appHandler.priceHandler.FindBuyDetail)
+	router.POST("/api/price/buytemplate/create", appHandler.priceHandler.CopyBuyTemplate)
+	router.POST("/api/price/buytemplate/edit-price", appHandler.priceHandler.EditBuyPrice)
+	router.POST("/api/price/buytemplate/apply", appHandler.priceHandler.ApplyToTrx)
+	router.POST("/api/price/buytemplate/delete", appHandler.priceHandler.DeleteBuyTemplate)
+	router.POST("/api/price/buytemplate/copy", appHandler.priceHandler.CopyBuyTemplate)
+	router.POST("/api/price/buytemplate/download", appHandler.priceHandler.DownloadBuy)
+
 	return router
 }

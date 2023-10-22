@@ -27,14 +27,18 @@ type Transaction struct {
 }
 
 type TransactionDetail struct {
-	ID            string  `json:"id"`
-	TransactionID string  `json:"transactionId"`
-	UnitID        string  `json:"unitId"`
-	ProductID     string  `json:"productId"`
-	BuyPrice      float64 `json:"buyPrice"`
-	SellPrice     float64 `json:"sellPrice"`
-	Quantity      float64 `json:"quantity"`
-	BuyQuantity   float64 `json:"buyQuantity"`
+	ID            string    `json:"id"`
+	TransactionID string    `json:"transactionId"`
+	UnitID        string    `json:"unitId"`
+	ProductID     string    `json:"productId"`
+	BuyPrice      float64   `json:"buyPrice"`
+	SellPrice     float64   `json:"sellPrice"`
+	Quantity      float64   `json:"quantity"`
+	BuyQuantity   float64   `json:"buyQuantity"`
+	CreatedTime   time.Time `json:"-"`
+	WebUserID     string    `json:"-"`
+	Latest        bool      `json:"-"`
+	SortingVal    int64     `json:"-"`
 }
 
 type TransactionStatus struct {

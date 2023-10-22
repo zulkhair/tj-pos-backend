@@ -19,8 +19,13 @@ type ApplyToCustomerReq struct {
 	CustomerIDs []string `json:"customerIds"`
 }
 
+type ApplyToTrxReq struct {
+	TemplateID string `json:"templateId"`
+	Date       string `json:"date"`
+}
+
 type Download struct {
-	TemplateID  string   `json:"templateId"`
+	TemplateID        string   `json:"templateId"`
 	TemplateDetailIDs []string `json:"templateDetailIds"`
 }
 

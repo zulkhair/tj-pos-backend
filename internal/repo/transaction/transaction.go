@@ -25,6 +25,8 @@ type TransactionRepo interface {
 	UpdateHargaBeli(transactionDetailID string, buyPrice int64, webUserID string) error
 	InsertTransactionBuy(transactionId string, transactionBuy []transactiondomain.TransactionBuy) error
 	FindTransactionBuyStatus() ([]transactiondomain.TransactionBuyStatus, error)
+	FindDetails(params []queryutil.Param) ([]*transactiondomain.TransactionDetail, error)
+	UpdateHargaBeliTx(transactionDetailID string, buyPrice float64, webUserID string, tx *gorm.DB) error
 }
 
 type Repo struct {
@@ -427,6 +429,19 @@ func (r *Repo) UpdateHargaBeli(transactionDetailID string, buyPrice int64, webUs
 	return nil
 }
 
+func (r *Repo) UpdateHargaBeliTx(transactionDetailID string, buyPrice float64, webUserID string, tx *gorm.DB) error {
+	tx.Exec("UPDATE public.transaction_detail SET latest=? WHERE id=?;", false, transactionDetailID)
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	return tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity, sorting_val) "+
+		"SELECT ?, transaction_id, product_id, ?, sell_price, quantity, ?, ?, ?, buy_quantity, sorting_val "+
+		"FROM public.transaction_detail "+
+		"WHERE id=?;", stringutil.GenerateUUID(), buyPrice, time.Now(), webUserID, true, transactionDetailID).Error
+}
+
 func (r *Repo) InsertTransactionBuy(transactionId string, transactionBuys []transactiondomain.TransactionBuy) error {
 	tx := global.DBCON.Begin()
 
@@ -489,6 +504,79 @@ func (r *Repo) FindTransactionBuyStatus() ([]transactiondomain.TransactionBuySta
 		entity.TotalSell = TotalSell.Int64
 
 		entities = append(entities, entity)
+	}
+
+	return entities, nil
+}
+
+func (r *Repo) FindDetails(params []queryutil.Param) ([]*transactiondomain.TransactionDetail, error) {
+	where := ""
+	var values []interface{}
+	for _, param := range params {
+		if where != "" {
+			logic := "AND "
+			if param.Logic != "" {
+				logic = param.Logic + " "
+			}
+			where += logic
+		}
+		where += param.Field + " " + param.Operator + " ? "
+		values = append(values, param.Value)
+	}
+
+	if where != "" {
+		where = "WHERE " + where
+	}
+
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT td.id, td.transaction_id, td.product_id, td.buy_price, td.sell_price, td.quantity, "+
+		"td.buy_quantity, td.created_time, td.web_user_id, td.latest, td.sorting_val "+
+		"FROM transaction_detail td "+
+		"JOIN transaction t ON (td.transaction_id = t.id) "+
+		"%s ", where), values...).Rows()
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entities []*transactiondomain.TransactionDetail
+	for rows.Next() {
+		var ID sql.NullString
+		var TransactionID sql.NullString
+		var ProductID sql.NullString
+		var BuyPrice sql.NullFloat64
+		var SellPrice sql.NullFloat64
+		var Quantity sql.NullFloat64
+		var BuyQuantity sql.NullFloat64
+		var CreatedTime sql.NullTime
+		var WebUserID sql.NullString
+		var Latest sql.NullBool
+		var SortingVal sql.NullInt64
+
+		err = rows.Scan(&ID, &TransactionID, &ProductID, &BuyPrice, &SellPrice, &Quantity, &BuyQuantity, &CreatedTime, &WebUserID, &Latest, &SortingVal)
+		if err != nil {
+			logrus.Error(err.Error())
+			return nil, err
+		}
+
+		if !ID.Valid && ID.String == "" {
+			return nil, nil
+		}
+
+		detail := &transactiondomain.TransactionDetail{}
+		detail.TransactionID = TransactionID.String
+		detail.ProductID = ProductID.String
+		detail.BuyPrice = BuyPrice.Float64
+		detail.SellPrice = SellPrice.Float64
+		detail.Quantity = Quantity.Float64
+		detail.BuyQuantity = BuyQuantity.Float64
+		detail.CreatedTime = CreatedTime.Time
+		detail.WebUserID = WebUserID.String
+		detail.Latest = Latest.Bool
+		detail.SortingVal = SortingVal.Int64
+
+		entities = append(entities, detail)
+
 	}
 
 	return entities, nil
