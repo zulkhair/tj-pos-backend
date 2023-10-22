@@ -262,7 +262,7 @@ func (r *Repo) AddPrice(priceTemplateId string, productId string, price float64)
 func (r *Repo) AddBuyPrice(priceTemplateId string, productId string, price float64) error {
 	ID := stringutil.GenerateUUID()
 
-	return global.DBCON.Exec("INSERT INTO public.buy_price_template_detail(id, price_template_id, product_id, price) VALUES (?, ?, ?, ?);", ID, priceTemplateId, productId, price).Error
+	return global.DBCON.Exec("INSERT INTO public.buy_price_template_detail(id, buy_price_template_id, product_id, price) VALUES (?, ?, ?, ?);", ID, priceTemplateId, productId, price).Error
 }
 
 func (r *Repo) EditPrice(priceTemplateId string, productId string, price float64) error {
@@ -270,7 +270,7 @@ func (r *Repo) EditPrice(priceTemplateId string, productId string, price float64
 }
 
 func (r *Repo) EditBuyPrice(priceTemplateId string, productId string, price float64) error {
-	return global.DBCON.Exec("UPDATE public.buy_price_template_detail SET price=? WHERE price_template_id=? AND product_id=?;", price, priceTemplateId, productId).Error
+	return global.DBCON.Exec("UPDATE public.buy_price_template_detail SET price=? WHERE buy_price_template_id=? AND product_id=?;", price, priceTemplateId, productId).Error
 }
 
 func (r *Repo) DeleteTemplate(templateId string) error {
@@ -295,7 +295,7 @@ func (r *Repo) DeleteTemplate(templateId string) error {
 func (r *Repo) DeleteBuyTemplate(templateId string) error {
 	tx := global.DBCON.Begin()
 
-	tx.Exec("DELETE FROM public.buy_price_template_detail WHERE price_template_id = ?;", templateId)
+	tx.Exec("DELETE FROM public.buy_price_template_detail WHERE buy_price_template_id = ?;", templateId)
 
 	if tx.Error != nil {
 		return tx.Error
@@ -339,13 +339,13 @@ func (r *Repo) UpdateChecked(request pricedomain.Download) error {
 func (r *Repo) UpdateBuyChecked(request pricedomain.Download) error {
 	tx := global.DBCON.Begin()
 
-	tx.Exec("UPDATE public.price_template_detail SET checked=FALSE WHERE price_template_id = ?;", request.TemplateID)
+	tx.Exec("UPDATE public.buy_price_template_detail SET checked=FALSE WHERE buy_price_template_id = ?;", request.TemplateID)
 	if tx.Error != nil {
 		tx.Rollback()
 		return tx.Error
 	}
 
-	tx.Exec("UPDATE public.price_template_detail SET checked=TRUE WHERE id IN ?;", request.TemplateDetailIDs)
+	tx.Exec("UPDATE public.buy_price_template_detail SET checked=TRUE WHERE id IN ?;", request.TemplateDetailIDs)
 	return tx.Commit().Error
 }
 

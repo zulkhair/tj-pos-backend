@@ -104,7 +104,7 @@ func (uc *Usecase) FindBuyDetail(templateId string) ([]*pricedomain.PriceTemplat
 	param := make(map[string]interface{})
 
 	if templateId != "" {
-		param["ptd.price_template_id"] = templateId
+		param["ptd.buy_price_template_id"] = templateId
 	}
 
 	entities, err := uc.priceRepo.FindBuyDetail(param)
@@ -181,7 +181,7 @@ func (uc *Usecase) EditPrice(templateId, productId string, price float64) error 
 }
 
 func (uc *Usecase) EditBuyPrice(templateId, productId string, price float64) error {
-	priceDetail, err := uc.priceRepo.FindBuyDetail(map[string]interface{}{"ptd.price_template_id": templateId, "ptd.product_id": productId})
+	priceDetail, err := uc.priceRepo.FindBuyDetail(map[string]interface{}{"ptd.buy_price_template_id": templateId, "ptd.product_id": productId})
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan perubahan data harga")
@@ -266,7 +266,7 @@ func (uc *Usecase) ApplyToCustomer(templateId string, customerId []string, userI
 
 func (uc *Usecase) ApplyToTrx(templateId string, date string, userId string) error {
 	now := time.Now().UTC()
-	priceDetail, err := uc.priceRepo.FindBuyDetail(map[string]interface{}{"ptd.price_template_id": templateId})
+	priceDetail, err := uc.priceRepo.FindBuyDetail(map[string]interface{}{"ptd.buy_price_template_id": templateId})
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan perubahan data harga")
@@ -311,9 +311,10 @@ func (uc *Usecase) ApplyToTrx(templateId string, date string, userId string) err
 		price := float64(0)
 		if detail, ok := priceDetailMap[transaction.ProductID]; ok {
 			price = detail
-			tx.Rollback()
-			logrus.Errorf("Cannot find price for product %s", transaction.ProductID)
-			return fmt.Errorf("Terjadi kesalahan saat melakukan perubahan data harga")
+		}
+
+		if price <= 0 {
+			continue
 		}
 
 		err = uc.transactionRepo.UpdateHargaBeliTx(transaction.ID, price, userId, tx)
@@ -404,7 +405,7 @@ func (uc *Usecase) CopyBuyTemplate(templateId, templateName string) error {
 		return fmt.Errorf("Terjadi kesalahan saat melakukan duplikasi data template harga")
 	}
 
-	priceDetail, err := uc.priceRepo.FindBuyDetail(map[string]interface{}{"ptd.price_template_id": templateId})
+	priceDetail, err := uc.priceRepo.FindBuyDetail(map[string]interface{}{"ptd.buy_price_template_id": templateId})
 	if err != nil {
 		logrus.Error(err.Error())
 		return fmt.Errorf("Terjadi kesalahan saat melakukan duplikasi data template harga")

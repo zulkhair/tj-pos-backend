@@ -436,10 +436,12 @@ func (r *Repo) UpdateHargaBeliTx(transactionDetailID string, buyPrice float64, w
 		return tx.Error
 	}
 
-	return tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity, sorting_val) "+
+	tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity, sorting_val) "+
 		"SELECT ?, transaction_id, product_id, ?, sell_price, quantity, ?, ?, ?, buy_quantity, sorting_val "+
 		"FROM public.transaction_detail "+
-		"WHERE id=?;", stringutil.GenerateUUID(), buyPrice, time.Now(), webUserID, true, transactionDetailID).Error
+		"WHERE id=?;", stringutil.GenerateUUID(), buyPrice, time.Now(), webUserID, true, transactionDetailID)
+
+	return tx.Error
 }
 
 func (r *Repo) InsertTransactionBuy(transactionId string, transactionBuys []transactiondomain.TransactionBuy) error {
@@ -564,6 +566,7 @@ func (r *Repo) FindDetails(params []queryutil.Param) ([]*transactiondomain.Trans
 		}
 
 		detail := &transactiondomain.TransactionDetail{}
+		detail.ID = ID.String
 		detail.TransactionID = TransactionID.String
 		detail.ProductID = ProductID.String
 		detail.BuyPrice = BuyPrice.Float64

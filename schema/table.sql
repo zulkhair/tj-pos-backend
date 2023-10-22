@@ -229,7 +229,7 @@ CREATE TABLE public.transaction_buy
 CREATE TABLE public.buy_price_template
 (
     id   VARCHAR(32) PRIMARY KEY,
-    name VARCHAR(256) NOT NULL,
+    name VARCHAR(256) NOT NULL
 );
 
 CREATE TABLE public.buy_price_template_transaction
@@ -238,8 +238,8 @@ CREATE TABLE public.buy_price_template_transaction
     buy_price_template_id VARCHAR(32) NOT NULL,
     transaction_id        VARCHAR(32) NOT NULL,
     created_time          TIMESTAMP WITH TIME ZONE,
-    web_user_id           VARCHAR(32) NOT NULL,
-)
+    web_user_id           VARCHAR(32) NOT NULL
+);
 
 CREATE TABLE public.buy_price_template_detail
 (
