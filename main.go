@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	fmt.Println("POS Backend v1.0.4")
+	fmt.Println("POS Backend v1.0.5")
 	// load configuration
 	fmt.Println("Load Configuration")
 	cfg, err := config.New("config.yaml")
