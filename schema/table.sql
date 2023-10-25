@@ -266,4 +266,4 @@ CREATE TABLE public.audit_log
 );
 
 ALTER TABLE public.customer
-ADD COLUMN initial_balance NUMERIC DEFAULT 0;
+ADD COLUMN initial_credit NUMERIC DEFAULT 0;

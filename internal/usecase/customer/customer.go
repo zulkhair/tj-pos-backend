@@ -61,7 +61,7 @@ func (uc *Usecase) Find(id, code, name string, active *bool) ([]*customerdomain.
 	return uc.customerRepo.Find(param)
 }
 
-func (uc *Usecase) Create(code, name, description string, initialBalance float64) error {
+func (uc *Usecase) Create(code, name, description string, initialCredit float64) error {
 	entities, err := uc.customerRepo.Find(map[string]interface{}{"code": code})
 	if err != nil {
 		logrus.Error(err.Error())
@@ -75,12 +75,12 @@ func (uc *Usecase) Create(code, name, description string, initialBalance float64
 	id := strings.ReplaceAll(uuid.NewString(), "-", "")
 
 	entity := &customerdomain.Customer{
-		ID:             id,
-		Code:           code,
-		Name:           name,
-		Description:    description,
-		Active:         true,
-		InitialBalance: initialBalance,
+		ID:            id,
+		Code:          code,
+		Name:          name,
+		Description:   description,
+		Active:        true,
+		InitialCredit: initialCredit,
 	}
 
 	err = uc.customerRepo.Create(entity)
@@ -92,7 +92,7 @@ func (uc *Usecase) Create(code, name, description string, initialBalance float64
 	return nil
 }
 
-func (uc *Usecase) Edit(id, code, name, description string, active bool, initialBalance float64) error {
+func (uc *Usecase) Edit(id, code, name, description string, active bool, initialCredit float64) error {
 	entities, err := uc.customerRepo.Find(map[string]interface{}{"id": id})
 	if err != nil {
 		logrus.Error(err.Error())
@@ -122,7 +122,7 @@ func (uc *Usecase) Edit(id, code, name, description string, active bool, initial
 	entity.Name = name
 	entity.Description = description
 	entity.Active = active
-	entity.InitialBalance = initialBalance
+	entity.InitialCredit = initialCredit
 
 	err = uc.customerRepo.Edit(entity)
 	if err != nil {

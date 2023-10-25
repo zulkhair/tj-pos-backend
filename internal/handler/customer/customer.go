@@ -79,15 +79,15 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	initialBalance := float64(0)
-	initialBalanceResult := gjson.Get(string(jsonData), "initialBalance")
-	if initialBalanceResult.Exists() || initialBalanceResult.Float() > 0 {
-		initialBalance = initialBalanceResult.Float()
+	initialCredit := float64(0)
+	initialCreditResult := gjson.Get(string(jsonData), "initialCredit")
+	if initialCreditResult.Exists() || initialCreditResult.Float() > 0 {
+		initialCredit = initialCreditResult.Float()
 	}
 
 	description := gjson.Get(string(jsonData), "description")
 
-	err = h.customerUsecase.Create(code.String(), name.String(), description.String(), initialBalance)
+	err = h.customerUsecase.Create(code.String(), name.String(), description.String(), initialCredit)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return
@@ -126,15 +126,15 @@ func (h *Handler) Edit(c *gin.Context) {
 		return
 	}
 
-	initialBalance := float64(0)
-	initialBalanceResult := gjson.Get(string(jsonData), "initialBalance")
-	if initialBalanceResult.Exists() || initialBalanceResult.Float() > 0 {
-		initialBalance = initialBalanceResult.Float()
+	initialCredit := float64(0)
+	initialCreditResult := gjson.Get(string(jsonData), "initialCredit")
+	if initialCreditResult.Exists() || initialCreditResult.Float() > 0 {
+		initialCredit = initialCreditResult.Float()
 	}
 
 	description := gjson.Get(string(jsonData), "description")
 
-	err = h.customerUsecase.Edit(id.String(), code.String(), name.String(), description.String(), active.Bool(), initialBalance)
+	err = h.customerUsecase.Edit(id.String(), code.String(), name.String(), description.String(), active.Bool(), initialCredit)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return
