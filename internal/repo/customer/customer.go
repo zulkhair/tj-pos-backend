@@ -47,7 +47,7 @@ func (r *Repo) Find(params map[string]interface{}) ([]*customerdomain.Customer, 
 		where = "WHERE " + where
 	}
 
-	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT id, code, name, description, active FROM customer %s ORDER BY code", where), values...).Rows()
+	rows, err := global.DBCON.Raw(fmt.Sprintf("SELECT id, code, name, description, active, initial_balance FROM customer %s ORDER BY code", where), values...).Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err
@@ -62,8 +62,9 @@ func (r *Repo) Find(params map[string]interface{}) ([]*customerdomain.Customer, 
 		var Name sql.NullString
 		var Description sql.NullString
 		var Active sql.NullBool
+		var InitialBalance sql.NullFloat64
 
-		rows.Scan(&ID, &Code, &Name, &Description, &Active)
+		rows.Scan(&ID, &Code, &Name, &Description, &Active, &InitialBalance)
 
 		entity := &customerdomain.Customer{}
 		if ID.Valid && ID.String != "" {
@@ -88,6 +89,8 @@ func (r *Repo) Find(params map[string]interface{}) ([]*customerdomain.Customer, 
 			entity.Active = Active.Bool
 		}
 
+		entity.InitialBalance = InitialBalance.Float64
+
 		entities = append(entities, entity)
 	}
 
@@ -95,15 +98,15 @@ func (r *Repo) Find(params map[string]interface{}) ([]*customerdomain.Customer, 
 }
 
 func (r *Repo) Create(entity *customerdomain.Customer) error {
-	return global.DBCON.Exec("INSERT INTO public.customer(id, code, name, description, active) "+
-		"VALUES (?, ?, ?, ?, ?)",
-		entity.ID, entity.Code, entity.Name, entity.Description, entity.Active).Error
+	return global.DBCON.Exec("INSERT INTO public.customer(id, code, name, description, active, initial_balance) "+
+		"VALUES (?, ?, ?, ?, ?, ?)",
+		entity.ID, entity.Code, entity.Name, entity.Description, entity.Active, entity.InitialBalance).Error
 }
 
 func (r *Repo) Edit(entity *customerdomain.Customer) error {
 	return global.DBCON.Exec("UPDATE public.customer "+
-		"SET code=?, name=?, description=?, active=? "+
-		"WHERE id=?;", entity.Code, entity.Name, entity.Description, entity.Active, entity.ID).Error
+		"SET code=?, name=?, description=?, active=?, initial_balance=? "+
+		"WHERE id=?;", entity.Code, entity.Name, entity.Description, entity.Active, entity.InitialBalance, entity.ID).Error
 }
 
 func (r *Repo) GetSellPrice(params []queryutil.Param) ([]*customerdomain.SellPriceResponse, error) {

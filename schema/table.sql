@@ -264,3 +264,6 @@ CREATE TABLE public.audit_log
     created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
     FOREIGN KEY (web_user_id) REFERENCES public.web_user (id)
 );
+
+ALTER TABLE public.customer
+ADD COLUMN initial_balance NUMERIC DEFAULT 0;

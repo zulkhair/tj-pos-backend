@@ -13,10 +13,12 @@ import (
 
 type CustmerUsecase interface {
 	Find(id, code, name string, active *bool) ([]*customerdomain.Customer, error)
-	Create(code, name, description string) error
-	Edit(id, code, name, description string, active bool) error
-	GetSellPrice(supplierId, unitId, date string) ([]*customerdomain.SellPriceResponse, error)
+	Create(code, name, description string, initialBalance float64) error
+	Edit(id, code, name, description string, active bool, initialBalance float64) error
+	GetSellPrice(customerId, unitId, date, productId string) ([]*customerdomain.SellPriceResponse, error)
 	UpdateSellPrice(request customerdomain.SellPriceRequest) error
+	AddSellPrice(entity customerdomain.AddPriceRequest, userId string) error
+	FindSellPrice(customerId, unitId, productId string, latest *bool) ([]*customerdomain.PriceResponse, error)
 }
 
 type Usecase struct {
@@ -59,7 +61,7 @@ func (uc *Usecase) Find(id, code, name string, active *bool) ([]*customerdomain.
 	return uc.customerRepo.Find(param)
 }
 
-func (uc *Usecase) Create(code, name, description string) error {
+func (uc *Usecase) Create(code, name, description string, initialBalance float64) error {
 	entities, err := uc.customerRepo.Find(map[string]interface{}{"code": code})
 	if err != nil {
 		logrus.Error(err.Error())
@@ -73,11 +75,12 @@ func (uc *Usecase) Create(code, name, description string) error {
 	id := strings.ReplaceAll(uuid.NewString(), "-", "")
 
 	entity := &customerdomain.Customer{
-		ID:          id,
-		Code:        code,
-		Name:        name,
-		Description: description,
-		Active:      true,
+		ID:             id,
+		Code:           code,
+		Name:           name,
+		Description:    description,
+		Active:         true,
+		InitialBalance: initialBalance,
 	}
 
 	err = uc.customerRepo.Create(entity)
@@ -89,7 +92,7 @@ func (uc *Usecase) Create(code, name, description string) error {
 	return nil
 }
 
-func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
+func (uc *Usecase) Edit(id, code, name, description string, active bool, initialBalance float64) error {
 	entities, err := uc.customerRepo.Find(map[string]interface{}{"id": id})
 	if err != nil {
 		logrus.Error(err.Error())
@@ -119,6 +122,7 @@ func (uc *Usecase) Edit(id, code, name, description string, active bool) error {
 	entity.Name = name
 	entity.Description = description
 	entity.Active = active
+	entity.InitialBalance = initialBalance
 
 	err = uc.customerRepo.Edit(entity)
 	if err != nil {

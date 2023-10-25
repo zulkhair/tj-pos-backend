@@ -2,32 +2,23 @@ package customerhandler
 
 import (
 	customerdomain "dromatech/pos-backend/internal/domain/customer"
+	customerusecase "dromatech/pos-backend/internal/usecase/customer"
 	restutil "dromatech/pos-backend/internal/util/rest"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
-	"io/ioutil"
+	"io"
 	"strconv"
 )
 
-type customerUsecase interface {
-	Find(id, code, name string, active *bool) ([]*customerdomain.Customer, error)
-	Create(code, name, description string) error
-	Edit(id, code, name, description string, active bool) error
-	GetSellPrice(customerId, unitId, date, productId string) ([]*customerdomain.SellPriceResponse, error)
-	UpdateSellPrice(request customerdomain.SellPriceRequest) error
-	AddSellPrice(entity customerdomain.AddPriceRequest, userId string) error
-	FindSellPrice(customerId, unitId, productId string, latest *bool) ([]*customerdomain.PriceResponse, error)
-}
-
 // Handler defines the handler
 type Handler struct {
-	customerUsecase customerUsecase
+	customerUsecase customerusecase.CustmerUsecase
 }
 
-func New(customerUsecase customerUsecase) *Handler {
+func New(customerUsecase customerusecase.CustmerUsecase) *Handler {
 	return &Handler{
 		customerUsecase: customerUsecase,
 	}
@@ -71,7 +62,7 @@ func (h *Handler) FindActive(c *gin.Context) {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.AbortWithError(400, fmt.Errorf("bad request"))
 	}
@@ -88,9 +79,15 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	initialBalance := float64(0)
+	initialBalanceResult := gjson.Get(string(jsonData), "initialBalance")
+	if initialBalanceResult.Exists() || initialBalanceResult.Float() > 0 {
+		initialBalance = initialBalanceResult.Float()
+	}
+
 	description := gjson.Get(string(jsonData), "description")
 
-	err = h.customerUsecase.Create(code.String(), name.String(), description.String())
+	err = h.customerUsecase.Create(code.String(), name.String(), description.String(), initialBalance)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return
@@ -100,7 +97,7 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) Edit(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.AbortWithError(400, fmt.Errorf("bad request"))
 	}
@@ -129,9 +126,15 @@ func (h *Handler) Edit(c *gin.Context) {
 		return
 	}
 
+	initialBalance := float64(0)
+	initialBalanceResult := gjson.Get(string(jsonData), "initialBalance")
+	if initialBalanceResult.Exists() || initialBalanceResult.Float() > 0 {
+		initialBalance = initialBalanceResult.Float()
+	}
+
 	description := gjson.Get(string(jsonData), "description")
 
-	err = h.customerUsecase.Edit(id.String(), code.String(), name.String(), description.String(), active.Bool())
+	err = h.customerUsecase.Edit(id.String(), code.String(), name.String(), description.String(), active.Bool(), initialBalance)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return
@@ -156,7 +159,7 @@ func (h *Handler) GetSellPrice(c *gin.Context) {
 }
 
 func (h *Handler) AddPrice(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		logrus.Error(err.Error())
 		restutil.SendResponseFail(c, "Ada kesalahan saat menambahkan data harga")
@@ -182,7 +185,7 @@ func (h *Handler) AddPrice(c *gin.Context) {
 }
 
 func (h *Handler) UpdateSellPrice(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		logrus.Error(err.Error())
 		restutil.SendResponseFail(c, "Ada kesalahan saat memperbarui harga")
