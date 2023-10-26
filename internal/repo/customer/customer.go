@@ -62,7 +62,7 @@ func (r *Repo) Find(params map[string]interface{}) ([]*customerdomain.Customer, 
 		var Name sql.NullString
 		var Description sql.NullString
 		var Active sql.NullBool
-		var InitialCredit sql.NullFloat64
+		var InitialCredit sql.NullInt64
 
 		rows.Scan(&ID, &Code, &Name, &Description, &Active, &InitialCredit)
 
@@ -89,7 +89,7 @@ func (r *Repo) Find(params map[string]interface{}) ([]*customerdomain.Customer, 
 			entity.Active = Active.Bool
 		}
 
-		entity.InitialCredit = InitialCredit.Float64
+		entity.InitialCredit = InitialCredit.Int64
 
 		entities = append(entities, entity)
 	}

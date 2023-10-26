@@ -253,7 +253,7 @@ func (r *Repo) FindPermissionsByRoleId(roleId string) ([]*roledomain.Permission,
 		"JOIN sub_menu s ON (p.sub_menu_id = s.id) "+
 		"JOIN menu m ON (s.menu_id = m.id) "+
 		"JOIN role_permission rp ON (rp.permission_id = p.id) "+
-		"WHERE rp.role_id = ?"+
+		"WHERE rp.role_id = ? "+
 		"ORDER BY m.seq_order, s.seq_order, p.seq_order", roleId).Rows()
 	if err != nil {
 		logrus.Error(err.Error())

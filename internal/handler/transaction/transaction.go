@@ -9,7 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+	"io"
 	"io/ioutil"
+	"time"
 )
 
 // Handler defines the handler
@@ -226,7 +228,7 @@ func (h *Handler) FindReport(c *gin.Context) {
 }
 
 func (h *Handler) UpdateHargaBeli(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		logrus.Error(err.Error())
 		c.AbortWithError(400, fmt.Errorf("bad request"))
@@ -262,7 +264,7 @@ func (h *Handler) UpdateHargaBeli(c *gin.Context) {
 }
 
 func (h *Handler) InsertTransactionBuy(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		logrus.Error(err.Error())
 		c.AbortWithError(400, fmt.Errorf("bad request"))
@@ -312,4 +314,31 @@ func (h *Handler) InsertTransactionBuy(c *gin.Context) {
 	}
 
 	restutil.SendResponseOk(c, "Harga beli berhasil diperbarui", nil)
+}
+
+func (h *Handler) FindCustomerCredit(c *gin.Context) {
+	month := c.Query("month")
+
+	if month == "" {
+		restutil.SendResponseFail(c, "Harap pilih bulan")
+		return
+	}
+
+	monnthTime, err := time.Parse("2006-01", month)
+	if err != nil {
+		restutil.SendResponseFail(c, "Harap pilih bulan")
+		return
+	}
+	if monnthTime.Before(time.Date(2023, 8, 1, 0, 0, 0, 0, monnthTime.Location())) {
+		restutil.SendResponseFail(c, "Bulan tidak valid")
+		return
+	}
+
+	response, err := h.transactionUsecase.FindCustomerCredit(monnthTime)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "", response)
 }

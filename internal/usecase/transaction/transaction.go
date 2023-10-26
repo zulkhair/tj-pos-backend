@@ -31,6 +31,7 @@ type TransactoionUsecase interface {
 	FindReport(startDate, endDate, code, stakeholderID, txType, status, productID, txId string) ([]*transactiondomain.ReportDate, error)
 	UpdateHargaBeli(request transactiondomain.UpdateHargaBeliRequest) error
 	InsertTransactionBuy(request transactiondomain.InsertTransactionBuyRequestBulk) error
+	FindCustomerCredit(time time.Time) (*transactiondomain.TransactionCredit, error)
 }
 
 type Usecase struct {
@@ -615,4 +616,80 @@ func (uc *Usecase) InsertTransactionBuy(request transactiondomain.InsertTransact
 
 func (uc *Usecase) FindTransactionBuyStatus() ([]transactiondomain.TransactionBuyStatus, error) {
 	return uc.transactionRepo.FindTransactionBuyStatus()
+}
+
+func (uc *Usecase) FindCustomerCredit(month time.Time) (*transactiondomain.TransactionCredit, error) {
+	transactionCredit := &transactiondomain.TransactionCredit{}
+
+	var param []queryutil.Param
+	param = append(param, queryutil.Param{
+		Logic:    "AND",
+		Field:    "t.date",
+		Operator: ">=",
+		Value:    "2023-08-01",
+	})
+
+	param = append(param, queryutil.Param{
+		Logic:    "AND",
+		Field:    "t.date",
+		Operator: "<",
+		Value:    time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+	})
+
+	param = append(param, queryutil.Param{
+		Logic:    "AND",
+		Field:    "t.status",
+		Operator: "NOT IN",
+		Value:    []string{"BATAL", "DIBAYAR"},
+	})
+
+	lastCreditMap, err := uc.transactionRepo.FindLastCredit(param)
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, fmt.Errorf("Terjadi kesalahan saat mengambil data piutang")
+	}
+
+	var param2 []queryutil.Param
+	param2 = append(param2, queryutil.Param{
+		Logic:    "AND",
+		Field:    "t.date",
+		Operator: ">=",
+		Value:    time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+	})
+
+	param2 = append(param2, queryutil.Param{
+		Logic:    "AND",
+		Field:    "t.date",
+		Operator: "<=",
+		Value:    time.Date(month.Year(), month.Month(), dateutil.DaysIn(month.Month(), month.Year()), 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+	})
+
+	param2 = append(param2, queryutil.Param{
+		Logic:    "AND",
+		Field:    "t.status",
+		Operator: "NOT IN",
+		Value:    []string{"BATAL", "DIBAYAR"},
+	})
+
+	lastCreditPerMonthMap, err := uc.transactionRepo.FindLastCreditPerMonth(param2)
+
+	customers, err := uc.customerRepo.Find(map[string]interface{}{"active": true})
+
+	transactions := make([]transactiondomain.TransactionCreditDate, 0)
+	for _, v := range customers {
+		t := transactiondomain.TransactionCreditDate{
+			CustomerCode: v.Code,
+			CustomerName: v.Name,
+			LastCredit:   lastCreditMap[v.Code] + v.InitialCredit,
+			Credits:      lastCreditPerMonthMap[v.Code],
+		}
+
+		transactions = append(transactions, t)
+	}
+
+	transactionCredit.PreviousMonth = dateutil.MonthToString(int(month.AddDate(0, -1, 0).Month()))
+	transactionCredit.Days = dateutil.DaysIn(month.Month(), month.Year())
+	transactionCredit.Transactions = transactions
+
+	return transactionCredit, nil
 }

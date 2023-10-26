@@ -132,3 +132,16 @@ type TransactionBuyStatus struct {
 	TotalBuy     int64  `json:"totalBuy"`
 	TotalSell    int64  `json:"totalSell"`
 }
+
+type TransactionCredit struct {
+	PreviousMonth string                  `json:"previousMonth"`
+	Days          int                     `json:"days"`
+	Transactions  []TransactionCreditDate `json:"transactions"`
+}
+
+type TransactionCreditDate struct {
+	CustomerCode string        `json:"customerCode"`
+	CustomerName string        `json:"customerName"`
+	LastCredit   int64         `json:"lastCredit"`
+	Credits      map[int]int64 `json:"credits"`
+}

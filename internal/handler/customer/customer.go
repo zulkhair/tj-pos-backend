@@ -79,10 +79,10 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	initialCredit := float64(0)
+	initialCredit := int64(0)
 	initialCreditResult := gjson.Get(string(jsonData), "initialCredit")
-	if initialCreditResult.Exists() || initialCreditResult.Float() > 0 {
-		initialCredit = initialCreditResult.Float()
+	if initialCreditResult.Exists() || initialCreditResult.Int() > 0 {
+		initialCredit = initialCreditResult.Int()
 	}
 
 	description := gjson.Get(string(jsonData), "description")
@@ -126,10 +126,10 @@ func (h *Handler) Edit(c *gin.Context) {
 		return
 	}
 
-	initialCredit := float64(0)
+	initialCredit := int64(0)
 	initialCreditResult := gjson.Get(string(jsonData), "initialCredit")
-	if initialCreditResult.Exists() || initialCreditResult.Float() > 0 {
-		initialCredit = initialCreditResult.Float()
+	if initialCreditResult.Exists() || initialCreditResult.Int() > 0 {
+		initialCredit = initialCreditResult.Int()
 	}
 
 	description := gjson.Get(string(jsonData), "description")

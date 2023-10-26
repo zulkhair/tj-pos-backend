@@ -13,8 +13,8 @@ import (
 
 type CustmerUsecase interface {
 	Find(id, code, name string, active *bool) ([]*customerdomain.Customer, error)
-	Create(code, name, description string, initialBalance float64) error
-	Edit(id, code, name, description string, active bool, initialBalance float64) error
+	Create(code, name, description string, initialBalance int64) error
+	Edit(id, code, name, description string, active bool, initialBalance int64) error
 	GetSellPrice(customerId, unitId, date, productId string) ([]*customerdomain.SellPriceResponse, error)
 	UpdateSellPrice(request customerdomain.SellPriceRequest) error
 	AddSellPrice(entity customerdomain.AddPriceRequest, userId string) error
@@ -61,7 +61,7 @@ func (uc *Usecase) Find(id, code, name string, active *bool) ([]*customerdomain.
 	return uc.customerRepo.Find(param)
 }
 
-func (uc *Usecase) Create(code, name, description string, initialCredit float64) error {
+func (uc *Usecase) Create(code, name, description string, initialCredit int64) error {
 	entities, err := uc.customerRepo.Find(map[string]interface{}{"code": code})
 	if err != nil {
 		logrus.Error(err.Error())
@@ -92,7 +92,7 @@ func (uc *Usecase) Create(code, name, description string, initialCredit float64)
 	return nil
 }
 
-func (uc *Usecase) Edit(id, code, name, description string, active bool, initialCredit float64) error {
+func (uc *Usecase) Edit(id, code, name, description string, active bool, initialCredit int64) error {
 	entities, err := uc.customerRepo.Find(map[string]interface{}{"id": id})
 	if err != nil {
 		logrus.Error(err.Error())
