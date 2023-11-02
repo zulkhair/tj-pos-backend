@@ -101,6 +101,9 @@ func (uc *Usecase) CreateTransaction(transaction *transactiondomain.Transaction)
 	}
 
 	for _, detail := range transaction.TransactionDetail {
+		// set buy price never be filled from creating transaction
+		detail.BuyPrice = 0
+
 		// cek dan update harga beli
 		buyPriceOlds, err := uc.supplierRepo.FindBuyPrice([]queryutil.Param{
 			{

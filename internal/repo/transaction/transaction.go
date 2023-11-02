@@ -245,6 +245,8 @@ func (r *Repo) Create(entity *transactiondomain.Transaction, tx *gorm.DB) {
 	}
 
 	for i, detail := range entity.TransactionDetail {
+		// hard set to 0 when creating new transaction
+		detail.BuyPrice = 0
 		txDetailId := stringutil.GenerateUUID()
 		detail.ID = txDetailId
 		tx.Exec("INSERT INTO public.transaction_detail(id, transaction_id, product_id, buy_price, sell_price, quantity, created_time, web_user_id, latest, buy_quantity, sorting_val) "+

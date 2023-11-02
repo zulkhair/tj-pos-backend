@@ -10,7 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"io"
-	"io/ioutil"
 	"time"
 )
 
@@ -45,7 +44,7 @@ func (h *Handler) Find(c *gin.Context) {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		logrus.Error(err.Error())
 		c.AbortWithError(400, fmt.Errorf("bad request"))
@@ -83,7 +82,7 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) UpdateStatus(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.AbortWithError(400, fmt.Errorf("bad request"))
 		return
@@ -105,7 +104,7 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 }
 
 func (h *Handler) CancelTrx(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.AbortWithError(400, fmt.Errorf("bad request"))
 		return
@@ -127,7 +126,7 @@ func (h *Handler) CancelTrx(c *gin.Context) {
 }
 
 func (h *Handler) UpdateBuyPrice(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.AbortWithError(400, fmt.Errorf("bad request"))
 		return
@@ -179,7 +178,7 @@ func (h *Handler) UpdateBuyPrice(c *gin.Context) {
 }
 
 func (h *Handler) Update(c *gin.Context) {
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	jsonData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		logrus.Error(err.Error())
 		c.AbortWithError(400, fmt.Errorf("bad request"))
