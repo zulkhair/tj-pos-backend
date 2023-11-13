@@ -10,6 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"io"
+	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -317,10 +319,21 @@ func (h *Handler) InsertTransactionBuy(c *gin.Context) {
 
 func (h *Handler) FindCustomerCredit(c *gin.Context) {
 	month := c.Query("month")
+	sell := c.Query("sell")
 
 	if month == "" {
 		restutil.SendResponseFail(c, "Harap pilih bulan")
 		return
+	}
+
+	sellBool := false
+	if sell != "" {
+		parsedBool, err := strconv.ParseBool(sell)
+		if err != nil {
+			restutil.CreateResponseJson(http.StatusBadRequest, "sell not valid", nil)
+			return
+		}
+		sellBool = parsedBool
 	}
 
 	monnthTime, err := time.Parse("2006-01", month)
@@ -333,7 +346,7 @@ func (h *Handler) FindCustomerCredit(c *gin.Context) {
 		return
 	}
 
-	response, err := h.transactionUsecase.FindCustomerCredit(monnthTime)
+	response, err := h.transactionUsecase.FindCustomerCredit(monnthTime, sellBool)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return

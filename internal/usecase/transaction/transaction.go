@@ -31,7 +31,7 @@ type TransactoionUsecase interface {
 	FindReport(startDate, endDate, code, stakeholderID, txType, status, productID, txId string) ([]*transactiondomain.ReportDate, error)
 	UpdateHargaBeli(request transactiondomain.UpdateHargaBeliRequest) error
 	InsertTransactionBuy(request transactiondomain.InsertTransactionBuyRequestBulk) error
-	FindCustomerCredit(time time.Time) (*transactiondomain.TransactionCredit, error)
+	FindCustomerCredit(month time.Time, sell bool) (*transactiondomain.TransactionCredit, error)
 }
 
 type Usecase struct {
@@ -621,15 +621,20 @@ func (uc *Usecase) FindTransactionBuyStatus() ([]transactiondomain.TransactionBu
 	return uc.transactionRepo.FindTransactionBuyStatus()
 }
 
-func (uc *Usecase) FindCustomerCredit(month time.Time) (*transactiondomain.TransactionCredit, error) {
+func (uc *Usecase) FindCustomerCredit(month time.Time, sell bool) (*transactiondomain.TransactionCredit, error) {
 	transactionCredit := &transactiondomain.TransactionCredit{}
+
+	status := []string{"BATAL"}
+	if !sell {
+		status = append(status, "DIBAYAR")
+	}
 
 	var param []queryutil.Param
 	param = append(param, queryutil.Param{
 		Logic:    "AND",
 		Field:    "t.date",
 		Operator: ">=",
-		Value:    "2023-08-01",
+		Value:    "2023-09-01",
 	})
 
 	param = append(param, queryutil.Param{
@@ -643,7 +648,7 @@ func (uc *Usecase) FindCustomerCredit(month time.Time) (*transactiondomain.Trans
 		Logic:    "AND",
 		Field:    "t.status",
 		Operator: "NOT IN",
-		Value:    []string{"BATAL", "DIBAYAR"},
+		Value:    status,
 	})
 
 	lastCreditMap, err := uc.transactionRepo.FindLastCredit(param)
@@ -671,7 +676,7 @@ func (uc *Usecase) FindCustomerCredit(month time.Time) (*transactiondomain.Trans
 		Logic:    "AND",
 		Field:    "t.status",
 		Operator: "NOT IN",
-		Value:    []string{"BATAL", "DIBAYAR"},
+		Value:    status,
 	})
 
 	lastCreditPerMonthMap, err := uc.transactionRepo.FindLastCreditPerMonth(param2)
