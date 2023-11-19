@@ -27,8 +27,8 @@ type TransactionRepo interface {
 	FindTransactionBuyStatus() ([]transactiondomain.TransactionBuyStatus, error)
 	FindDetails(params []queryutil.Param) ([]*transactiondomain.TransactionDetail, error)
 	UpdateHargaBeliTx(transactionDetailID string, buyPrice float64, webUserID string, tx *gorm.DB) error
-	FindLastCreditPerMonth(params []queryutil.Param) (map[string]map[int]int64, error)
-	FindLastCredit(params []queryutil.Param) (map[string]int64, error)
+	FindLastCreditPerMonth(params []queryutil.Param) (map[string]map[int]float64, error)
+	FindLastCredit(params []queryutil.Param) (map[string]float64, error)
 }
 
 type Repo struct {
@@ -589,7 +589,7 @@ func (r *Repo) FindDetails(params []queryutil.Param) ([]*transactiondomain.Trans
 	return entities, nil
 }
 
-func (r *Repo) FindLastCredit(params []queryutil.Param) (map[string]int64, error) {
+func (r *Repo) FindLastCredit(params []queryutil.Param) (map[string]float64, error) {
 	where := ""
 	var values []interface{}
 	for _, param := range params {
@@ -608,7 +608,7 @@ func (r *Repo) FindLastCredit(params []queryutil.Param) (map[string]int64, error
 		where = "WHERE " + where
 	}
 
-	query := "SELECT c.code, SUM(td.sell_price) AS \"balance\" FROM transaction t " +
+	query := "SELECT c.code, SUM(td.quantity * td.sell_price) AS \"balance\" FROM transaction t " +
 		"JOIN transaction_detail td ON (t.id = td.transaction_id) " +
 		"JOIN customer c ON (t.stakeholder_id = c.id) " +
 		"%s GROUP BY c.code ORDER BY c.code;"
@@ -620,10 +620,10 @@ func (r *Repo) FindLastCredit(params []queryutil.Param) (map[string]int64, error
 	}
 	defer rows.Close()
 
-	entities := make(map[string]int64)
+	entities := make(map[string]float64)
 	for rows.Next() {
 		var CustomerCode sql.NullString
-		var LastCredit sql.NullInt64
+		var LastCredit sql.NullFloat64
 
 		err = rows.Scan(&CustomerCode, &LastCredit)
 		if err != nil {
@@ -635,13 +635,13 @@ func (r *Repo) FindLastCredit(params []queryutil.Param) (map[string]int64, error
 			return nil, nil
 		}
 
-		entities[CustomerCode.String] = LastCredit.Int64
+		entities[CustomerCode.String] = LastCredit.Float64
 	}
 
 	return entities, nil
 }
 
-func (r *Repo) FindLastCreditPerMonth(params []queryutil.Param) (map[string]map[int]int64, error) {
+func (r *Repo) FindLastCreditPerMonth(params []queryutil.Param) (map[string]map[int]float64, error) {
 	where := ""
 	var values []interface{}
 	for _, param := range params {
@@ -660,7 +660,7 @@ func (r *Repo) FindLastCreditPerMonth(params []queryutil.Param) (map[string]map[
 		where = "WHERE " + where
 	}
 
-	query := "SELECT c.code, t.date, SUM(td.sell_price) FROM transaction t " +
+	query := "SELECT c.code, t.date, SUM(td.quantity * td.sell_price) FROM transaction t " +
 		"JOIN transaction_detail td ON (t.id = td.transaction_id) " +
 		"JOIN customer c ON (t.stakeholder_id = c.id) " +
 		"%s GROUP BY c.code, t.date ORDER BY c.code, t.date;"
@@ -672,11 +672,11 @@ func (r *Repo) FindLastCreditPerMonth(params []queryutil.Param) (map[string]map[
 	}
 	defer rows.Close()
 
-	entities := make(map[string]map[int]int64)
+	entities := make(map[string]map[int]float64)
 	for rows.Next() {
 		var CustomerCode sql.NullString
 		var Date time.Time
-		var Credit sql.NullInt64
+		var Credit sql.NullFloat64
 
 		err = rows.Scan(&CustomerCode, &Date, &Credit)
 		if err != nil {
@@ -689,10 +689,11 @@ func (r *Repo) FindLastCreditPerMonth(params []queryutil.Param) (map[string]map[
 		}
 
 		if _, ok := entities[CustomerCode.String]; !ok {
-			entities[CustomerCode.String] = make(map[int]int64)
+			entities[CustomerCode.String] = make(map[int]float64)
+			entities[CustomerCode.String] = make(map[int]float64)
 		}
 
-		entities[CustomerCode.String][Date.Day()] = Credit.Int64
+		entities[CustomerCode.String][Date.Day()] = Credit.Float64
 
 	}
 

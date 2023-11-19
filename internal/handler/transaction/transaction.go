@@ -341,7 +341,7 @@ func (h *Handler) FindCustomerCredit(c *gin.Context) {
 		restutil.SendResponseFail(c, "Harap pilih bulan")
 		return
 	}
-	if monnthTime.Before(time.Date(2023, 8, 1, 0, 0, 0, 0, monnthTime.Location())) {
+	if monnthTime.Before(time.Date(2023, 9, 1, 0, 0, 0, 0, monnthTime.Location())) {
 		restutil.SendResponseFail(c, "Bulan tidak valid")
 		return
 	}

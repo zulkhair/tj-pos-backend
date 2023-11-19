@@ -688,7 +688,7 @@ func (uc *Usecase) FindCustomerCredit(month time.Time, sell bool) (*transactiond
 		t := transactiondomain.TransactionCreditDate{
 			CustomerCode: v.Code,
 			CustomerName: v.Name,
-			LastCredit:   lastCreditMap[v.Code] + v.InitialCredit,
+			LastCredit:   lastCreditMap[v.Code] + float64(v.InitialCredit),
 			Credits:      lastCreditPerMonthMap[v.Code],
 		}
 

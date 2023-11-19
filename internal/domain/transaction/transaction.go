@@ -140,8 +140,8 @@ type TransactionCredit struct {
 }
 
 type TransactionCreditDate struct {
-	CustomerCode string        `json:"customerCode"`
-	CustomerName string        `json:"customerName"`
-	LastCredit   int64         `json:"lastCredit"`
-	Credits      map[int]int64 `json:"credits"`
+	CustomerCode string          `json:"customerCode"`
+	CustomerName string          `json:"customerName"`
+	LastCredit   float64         `json:"lastCredit"`
+	Credits      map[int]float64 `json:"credits"`
 }
