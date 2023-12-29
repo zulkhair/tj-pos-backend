@@ -651,6 +651,13 @@ func (uc *Usecase) FindCustomerCredit(month time.Time, sell bool) (*transactiond
 		Value:    status,
 	})
 
+	param = append(param, queryutil.Param{
+		Logic:    "AND",
+		Field:    "td.latest",
+		Operator: "=",
+		Value:    true,
+	})
+
 	lastCreditMap, err := uc.transactionRepo.FindLastCredit(param)
 	if err != nil {
 		logrus.Error(err.Error())
@@ -677,6 +684,13 @@ func (uc *Usecase) FindCustomerCredit(month time.Time, sell bool) (*transactiond
 		Field:    "t.status",
 		Operator: "NOT IN",
 		Value:    status,
+	})
+
+	param2 = append(param2, queryutil.Param{
+		Logic:    "AND",
+		Field:    "td.latest",
+		Operator: "=",
+		Value:    true,
 	})
 
 	lastCreditPerMonthMap, err := uc.transactionRepo.FindLastCreditPerMonth(param2)
