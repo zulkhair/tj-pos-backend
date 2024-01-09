@@ -150,7 +150,7 @@ func (r *Repo) FindTransaction(params []queryutil.Param) ([]*transactiondomain.T
 		"JOIN web_user w ON (w.id = t.web_user_id) "+
 		"JOIN product p ON (p.id = td.product_id) "+
 		"JOIN unit u ON (u.id = p.unit_id) "+
-		"%s ORDER BY t.code ASC, t.date ASC, td.sorting_val ASC", where), values...).Rows()
+		"%s ORDER BY t.date ASC, t.code ASC, td.sorting_val ASC", where), values...).Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err
