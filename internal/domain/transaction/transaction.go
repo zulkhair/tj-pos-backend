@@ -1,6 +1,7 @@
 package transactiondomain
 
 import (
+	kontrabondomain "dromatech/pos-backend/internal/domain/kontrabon"
 	"time"
 )
 
@@ -144,4 +145,17 @@ type TransactionCreditDate struct {
 	CustomerName string          `json:"customerName"`
 	LastCredit   float64         `json:"lastCredit"`
 	Credits      map[int]float64 `json:"credits"`
+}
+
+type LaporanCustomerSumary struct {
+	TotalOrder  int                                  `json:"totalOrder"`
+	Days        int                                  `json:"days"`
+	ProductData []*LaporanCustomer                   `json:"productData"`
+	Kontrabon   []*kontrabondomain.KontrabonResponse `json:"kontrabon"`
+}
+
+type LaporanCustomer struct {
+	ProductCode string      `json:"productCode"`
+	ProductName string      `json:"productName"`
+	Counts      map[int]int `json:"counts"`
 }

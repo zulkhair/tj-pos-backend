@@ -4,10 +4,11 @@ import (
 	sessiondomain "dromatech/pos-backend/internal/domain/session"
 	restutil "dromatech/pos-backend/internal/util/rest"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/tidwall/gjson"
 	"io"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/tidwall/gjson"
 )
 
 type sessionUsecase interface {

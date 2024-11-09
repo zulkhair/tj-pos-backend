@@ -31,7 +31,8 @@ VALUES ('web:user:createUser', 'web:user', 'Tambah Data', 0, '/user/register-use
        ('web:transaction:buy', 'web:transaction', 'Pembelian', 1, '/transaction/buy.html', 'fas fa-bag-shopping'),
        ('web:transaction:report', 'web:transaction', 'Laporan Transaksi', 4, '/transaction/report.html', 'fas fa-coins'),
        ('web:transaction:customerCredit', 'web:transaction', 'Laporan Piutang', 5, '/transaction/customer-credit.html', 'fas fa-clipboard-list'),
-       ('web:transaction:customerSell', 'web:transaction', 'Laporan Penjualan', 6, '/transaction/customer-sell.html', 'fas fa-clipboard-list')
+       ('web:transaction:customerSell', 'web:transaction', 'Laporan Penjualan', 6, '/transaction/customer-sell.html', 'fas fa-clipboard-list'),
+       ('web:transaction:customerReport', 'web:transaction', 'Laporan Customer', 7, '/transaction/customer-report.html', 'fas fa-clipboard-list')
 ;
 
 ------------ PERMISSION -------------
@@ -63,7 +64,8 @@ VALUES ('web:user:createUser', 'web:user:createUser', 'Registrasi', 0, '/api/rol
        ('web:transaction:report:updatebuyprice', 'web:transaction:report', 'Ubah Harga Beli', 0, '/api/transaction/find;/api/transaction/report;/api/transaction/updateHargaBeli'),
        ('web:transaction:buy:add', 'web:transaction:buy', 'Pembelian', 0, '/api/transaction/insertTransactionBuy;/api/unit/find;/api/supplier/find;/api/product/find;'),
        ('web:transaction:customerCredit:view', 'web:transaction:customerCredit', 'Lihat Laporan Piutang', 0, '/api/transaction/findCustomerCredit'),
-       ('web:transaction:customerSell:view', 'web:transaction:customerSell', 'Lihat Laporan Penjualan', 0, '/api/transaction/findCustomerCredit')
+       ('web:transaction:customerSell:view', 'web:transaction:customerSell', 'Lihat Laporan Penjualan', 0, '/api/transaction/findCustomerCredit'),
+       ('web:transaction:customerReport:view', 'web:transaction:customerReport', 'Lihat Laporan Customer', 0, '/api/transaction/findCustomerReport;/api/customer/find')
 ;
 
 ----------------- ROLE ---------------

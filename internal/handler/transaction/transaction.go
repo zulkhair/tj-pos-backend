@@ -6,13 +6,14 @@ import (
 	restutil "dromatech/pos-backend/internal/util/rest"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"io"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
 
 // Handler defines the handler
@@ -347,6 +348,39 @@ func (h *Handler) FindCustomerCredit(c *gin.Context) {
 	}
 
 	response, err := h.transactionUsecase.FindCustomerCredit(monnthTime, sellBool)
+	if err != nil {
+		restutil.SendResponseFail(c, err.Error())
+		return
+	}
+
+	restutil.SendResponseOk(c, "", response)
+}
+
+func (h *Handler) FindCustomerReport(c *gin.Context) {
+	month := c.Query("month")
+	stakeholderId := c.Query("stakeholderId")
+
+	if stakeholderId == "" {
+		restutil.SendResponseFail(c, "Harap pilih stakeholder")
+		return
+	}
+
+	if month == "" {
+		restutil.SendResponseFail(c, "Harap pilih bulan")
+		return
+	}
+
+	monnthTime, err := time.Parse("2006-01", month)
+	if err != nil {
+		restutil.SendResponseFail(c, "Harap pilih bulan")
+		return
+	}
+	if monnthTime.Before(time.Date(2023, 9, 1, 0, 0, 0, 0, monnthTime.Location())) {
+		restutil.SendResponseFail(c, "Bulan tidak valid")
+		return
+	}
+
+	response, err := h.transactionUsecase.FindCustomerReport(stakeholderId, monnthTime)
 	if err != nil {
 		restutil.SendResponseFail(c, err.Error())
 		return

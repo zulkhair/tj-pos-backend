@@ -2,15 +2,17 @@ package transactionrepo
 
 import (
 	"database/sql"
+	"fmt"
+	"time"
+
+	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
+
 	"dromatech/pos-backend/global"
 	transactiondomain "dromatech/pos-backend/internal/domain/transaction"
 	dateutil "dromatech/pos-backend/internal/util/date"
 	queryutil "dromatech/pos-backend/internal/util/query"
 	stringutil "dromatech/pos-backend/internal/util/string"
-	"fmt"
-	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
-	"time"
 )
 
 type TransactionRepo interface {
@@ -29,6 +31,7 @@ type TransactionRepo interface {
 	UpdateHargaBeliTx(transactionDetailID string, buyPrice float64, webUserID string, tx *gorm.DB) error
 	FindLastCreditPerMonth(params []queryutil.Param) (map[string]map[int]float64, error)
 	FindLastCredit(params []queryutil.Param) (map[string]float64, error)
+	FindCustomerReport(stakeHolderID string, month time.Time) ([]*transactiondomain.LaporanCustomer, int, error)
 }
 
 type Repo struct {
@@ -698,4 +701,67 @@ func (r *Repo) FindLastCreditPerMonth(params []queryutil.Param) (map[string]map[
 	}
 
 	return entities, nil
+}
+
+func (r *Repo) FindCustomerReport(stakeHolderID string, month time.Time) ([]*transactiondomain.LaporanCustomer, int, error) {
+	query := `select p.code, p.name, count(p.*), t.date, t.id 
+	from public.transaction_detail td 
+	join public.transaction t on t.id = td.transaction_id 
+	join public.product p on p.id = td.product_id 
+	where t.transaction_type = 'SELL' 
+	and (t.status = 'KONTRABON' or t.status = 'DIBAYAR') 
+	and t.date >= ? 
+	and t.date <= ?
+	and t.stakeholder_id = ?
+	group by p.code, p.name, t.date, t.stakeholder_id, t.id 
+	order by p.name, t.date`
+
+	startDate := time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+	endDate := time.Date(month.Year(), month.Month(), dateutil.DaysIn(month.Month(), month.Year()), 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+
+	rows, err := global.DBCON.Raw(query, startDate, endDate, stakeHolderID).Rows()
+
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	entities := make(map[string]*transactiondomain.LaporanCustomer)
+	txId := make(map[string]struct{})
+	var result []*transactiondomain.LaporanCustomer = make([]*transactiondomain.LaporanCustomer, 0)
+	for rows.Next() {
+		var ProductCode sql.NullString
+		var ProductName sql.NullString
+		var Count sql.NullInt32
+		var Date time.Time
+		var TxID sql.NullString
+
+		err = rows.Scan(&ProductCode, &ProductName, &Count, &Date, &TxID)
+		if err != nil {
+			logrus.Error(err.Error())
+			return nil, 0, err
+		}
+
+		if !ProductCode.Valid && ProductCode.String == "" {
+			return nil, 0, nil
+		}
+
+		if _, ok := entities[ProductCode.String]; !ok {
+			entity := &transactiondomain.LaporanCustomer{
+				ProductCode: ProductCode.String,
+				ProductName: ProductName.String,
+				Counts:      make(map[int]int),
+			}
+
+			entities[ProductCode.String] = entity
+			result = append(result, entity)
+		}
+
+		entities[ProductCode.String].Counts[Date.Day()] = int(Count.Int32)
+		txId[TxID.String] = struct{}{}
+	}
+
+	return result, len(txId), nil
+
 }

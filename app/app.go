@@ -88,7 +88,7 @@ func StartApp() error {
 	supplierUsecase := supplierusecase.New(supplierRepo)
 	custmerUsecase := customerusecase.New(customerRepo)
 	unitUsecase := unitusecase.New(unitRepo)
-	transactionusecase := transactionusecase.New(transactionRepo, sequenceRepo, supplierRepo, customerRepo)
+	transactionusecase := transactionusecase.New(transactionRepo, sequenceRepo, supplierRepo, customerRepo, kontrabonRepo)
 	kontrabonUseccase := kontrabonusecase.New(kontrabonRepo, sequenceRepo, customerRepo)
 	priceUsecase := priceusecase.New(priceRepo, productRepo, customerRepo, transactionRepo)
 

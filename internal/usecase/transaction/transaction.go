@@ -1,23 +1,26 @@
 package transactionusecase
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
+
 	"dromatech/pos-backend/global"
 	customerdomain "dromatech/pos-backend/internal/domain/customer"
 	supplierdomain "dromatech/pos-backend/internal/domain/supplier"
 	transactiondomain "dromatech/pos-backend/internal/domain/transaction"
 	customerrepo "dromatech/pos-backend/internal/repo/customer"
+	kontrabonrepo "dromatech/pos-backend/internal/repo/kontrabon"
 	sequencerepo "dromatech/pos-backend/internal/repo/sequence"
 	supplierrepo "dromatech/pos-backend/internal/repo/supplier"
 	transactionrepo "dromatech/pos-backend/internal/repo/transaction"
 	dateutil "dromatech/pos-backend/internal/util/date"
 	queryutil "dromatech/pos-backend/internal/util/query"
 	stringutil "dromatech/pos-backend/internal/util/string"
-	"fmt"
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type TransactoionUsecase interface {
@@ -32,6 +35,7 @@ type TransactoionUsecase interface {
 	UpdateHargaBeli(request transactiondomain.UpdateHargaBeliRequest) error
 	InsertTransactionBuy(request transactiondomain.InsertTransactionBuyRequestBulk) error
 	FindCustomerCredit(month time.Time, sell bool) (*transactiondomain.TransactionCredit, error)
+	FindCustomerReport(stakeholderId string, month time.Time) (*transactiondomain.LaporanCustomerSumary, error)
 }
 
 type Usecase struct {
@@ -39,14 +43,16 @@ type Usecase struct {
 	sequenceRepo    sequencerepo.SequenceRepo
 	supplierRepo    supplierrepo.SupplierRepo
 	customerRepo    customerrepo.CustomerRepo
+	kontrabonRepo   kontrabonrepo.KontrabonRepo
 }
 
-func New(transactionRepo transactionrepo.TransactionRepo, sequenceRepo sequencerepo.SequenceRepo, supplierRepo supplierrepo.SupplierRepo, customerRepo customerrepo.CustomerRepo) *Usecase {
+func New(transactionRepo transactionrepo.TransactionRepo, sequenceRepo sequencerepo.SequenceRepo, supplierRepo supplierrepo.SupplierRepo, customerRepo customerrepo.CustomerRepo, kontrabonRepo kontrabonrepo.KontrabonRepo) *Usecase {
 	uc := &Usecase{
 		transactionRepo: transactionRepo,
 		sequenceRepo:    sequenceRepo,
 		supplierRepo:    supplierRepo,
 		customerRepo:    customerRepo,
+		kontrabonRepo:   kontrabonRepo,
 	}
 
 	return uc
@@ -714,4 +720,50 @@ func (uc *Usecase) FindCustomerCredit(month time.Time, sell bool) (*transactiond
 	transactionCredit.Transactions = transactions
 
 	return transactionCredit, nil
+}
+
+func (uc *Usecase) FindCustomerReport(stakeholderId string, month time.Time) (*transactiondomain.LaporanCustomerSumary, error) {
+	startDate := time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+	endDate := time.Date(month.Year(), month.Month(), dateutil.DaysIn(month.Month(), month.Year()), 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+
+	laporanCustomer, totalOrder, err := uc.transactionRepo.FindCustomerReport(stakeholderId, month)
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, fmt.Errorf("Terjadi kesalahan saat mengambil data laporan per customer")
+	}
+
+	var param []queryutil.Param
+	param = append(param, queryutil.Param{
+		Logic:    "AND",
+		Field:    "k.created_time",
+		Operator: ">=",
+		Value:    startDate,
+	})
+	param = append(param, queryutil.Param{
+		Logic:    "AND",
+		Field:    "k.created_time",
+		Operator: "<=",
+		Value:    endDate,
+	})
+	param = append(param, queryutil.Param{
+		Logic:    "AND",
+		Field:    "customer_id",
+		Operator: "=",
+		Value:    stakeholderId,
+	})
+
+	trx, err := uc.kontrabonRepo.Find(param)
+	if err != nil {
+		logrus.Error(err.Error())
+		return nil, fmt.Errorf("Terjadi kesalahan saat melakukan pencarian kontrabon")
+	}
+
+	result := &transactiondomain.LaporanCustomerSumary{
+		TotalOrder:  totalOrder,
+		ProductData: laporanCustomer,
+		Kontrabon:   trx,
+		Days:        dateutil.DaysIn(month.Month(), month.Year()),
+	}
+
+	return result, nil
 }
