@@ -62,8 +62,9 @@ func (uc *Usecase) EditUser(userId, name, username, role, status string) error {
 	if status != "" {
 		ac, err := strconv.ParseBool(status)
 		if err != nil {
-			webuser.Active = ac
+			return fmt.Errorf("Status tidak valid")
 		}
+		webuser.Active = ac
 	}
 
 	err := uc.webuserrepo.EditUser(webuser)

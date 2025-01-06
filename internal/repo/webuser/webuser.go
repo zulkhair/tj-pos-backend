@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"dromatech/pos-backend/global"
 	webuserdomain "dromatech/pos-backend/internal/domain/webuser"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -218,7 +219,7 @@ func (r *Repo) FindByUsername(username string) *webuserdomain.WebUser {
 	return user
 }
 
-func (r *Repo) EditUser(webUser *webuserdomain.WebUser) error{
+func (r *Repo) EditUser(webUser *webuserdomain.WebUser) error {
 	return global.DBCON.Exec("UPDATE public.web_user "+
 		"SET name=?, username=?, role_id=?, active=? "+
 		"WHERE id=?;", webUser.Name, webUser.Username, webUser.RoleId, webUser.Active, webUser.ID).Error
