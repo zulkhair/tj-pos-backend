@@ -3,3 +3,7 @@
 *.exe
 /build_linux
 /pos-backend
+build/tj-pos-linux-amd64
+tmp/build-errors.log
+tmp/main
+.DS_Store

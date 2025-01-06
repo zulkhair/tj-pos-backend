@@ -5,11 +5,12 @@ import (
 	webuserdomain "dromatech/pos-backend/internal/domain/webuser"
 	"encoding/base64"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type SessionUsecase interface {
@@ -50,8 +51,8 @@ func (uc *Usecase) EditUser(userId, name, username, role, status string) error {
 	}
 	if username != "" {
 		u := uc.webuserrepo.FindByUsername(username)
-		if u != nil {
-			return fmt.Errorf("User dengan username '&s' sudah ada", username)
+		if u != nil && u.ID != userId {
+			return fmt.Errorf("User dengan username '%s' sudah ada", username)
 		}
 		webuser.Username = username
 	}

@@ -1,14 +1,16 @@
 package webuserhandler
 
 import (
-	webuserdomain "dromatech/pos-backend/internal/domain/webuser"
-	restutil "dromatech/pos-backend/internal/util/rest"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
-	"io/ioutil"
-	"net/http"
+
+	webuserdomain "dromatech/pos-backend/internal/domain/webuser"
+	restutil "dromatech/pos-backend/internal/util/rest"
 )
 
 type webuserUsecase interface {
