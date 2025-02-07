@@ -94,5 +94,30 @@ func newRoutes(appHandler AppHandler) *gin.Engine {
 	router.POST("/api/price/buytemplate/copy", appHandler.priceHandler.CopyBuyTemplate)
 	router.POST("/api/price/buytemplate/download", appHandler.priceHandler.DownloadBuy)
 
+	router.GET("/api/mobile/dana/find", appHandler.transactionHandler.FindDana)
+	router.POST("/api/mobile/dana/create", appHandler.transactionHandler.CreateDana)
+	router.POST("/api/mobile/dana/update", appHandler.transactionHandler.UpdateDana)
+	router.POST("/api/mobile/dana/send", appHandler.transactionHandler.SendDana)
+	router.POST("/api/mobile/dana/approve", appHandler.transactionHandler.ApproveDana)
+	router.POST("/api/mobile/dana/reject", appHandler.transactionHandler.RejectDana)
+	router.POST("/api/mobile/dana/cancel", appHandler.transactionHandler.CancelSendDana)
+	router.GET("/api/mobile/dana/find-user", appHandler.transactionHandler.FindUserMobile)
+
+	router.POST("/api/mobile/penjualan/create", appHandler.transactionHandler.CreatePenjualan)
+	router.POST("/api/mobile/penjualan/delete", appHandler.transactionHandler.DeletePenjualan)
+	router.GET("/api/mobile/penjualan/find", appHandler.transactionHandler.FindPenjualan)
+
+	router.POST("/api/mobile/belanja/create", appHandler.transactionHandler.CreateBelanja)
+	router.POST("/api/mobile/belanja/delete", appHandler.transactionHandler.DeleteBelanja)
+	router.GET("/api/mobile/belanja/find", appHandler.transactionHandler.FindBelanja)
+
+	router.POST("/api/mobile/operasional/create", appHandler.transactionHandler.CreateOperasional)
+	router.POST("/api/mobile/operasional/delete", appHandler.transactionHandler.DeleteOperasional)
+	router.GET("/api/mobile/operasional/find", appHandler.transactionHandler.FindOperasional)
+	router.GET("/api/mobile/operasional/find-description", appHandler.transactionHandler.FindDescriptionOperasional)
+
+	router.GET("/api/mobile/saldo", appHandler.transactionHandler.FindSaldo)
+	router.GET("/api/mobile/rekapitulasi", appHandler.transactionHandler.FindRekapitulasi)
+
 	return router
 }

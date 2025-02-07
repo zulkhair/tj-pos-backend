@@ -267,3 +267,68 @@ CREATE TABLE public.audit_log
 
 ALTER TABLE public.customer
 ADD COLUMN initial_credit NUMERIC DEFAULT 0;
+
+ALTER TABLE public.permission
+ALTER COLUMN apis TYPE VARCHAR(1000);
+
+CREATE TABLE public.dana
+(
+    id              VARCHAR(32) PRIMARY KEY,
+    date            TIMESTAMP WITH TIME ZONE NOT NULL,
+    web_user_id     VARCHAR(32) NOT NULL,
+    saldo_awal      NUMERIC     NOT NULL,
+    dana_tambahan   NUMERIC NOT NULL,
+    created_time    TIMESTAMP WITH TIME ZONE NOT NULL,
+    FOREIGN KEY (web_user_id) REFERENCES public.web_user (id)
+);
+
+CREATE TABLE public.dana_transaction
+(
+    id                  VARCHAR(32) PRIMARY KEY,
+    date                TIMESTAMP WITH TIME ZONE NOT NULL,
+    sender              VARCHAR(32) NOT NULL,
+    receiver            VARCHAR(32) NOT NULL,
+    amount              NUMERIC NOT NULL,
+    status              VARCHAR(32) NOT NULL,
+    created_time        TIMESTAMP WITH TIME ZONE NOT NULL,
+    FOREIGN KEY (sender) REFERENCES public.web_user (id),
+    FOREIGN KEY (receiver) REFERENCES public.web_user (id)
+);
+
+CREATE TABLE public.penjualan_tunai
+(   
+    id              VARCHAR(32) PRIMARY KEY,
+    web_user_id     VARCHAR(32) NOT NULL,
+    date            TIMESTAMP WITH TIME ZONE NOT NULL,
+    product_id      VARCHAR(32) NOT NULL,
+    quantity        SMALLINT NOT NULL,
+    price           NUMERIC NOT NULL,
+    created_time    TIMESTAMP WITH TIME ZONE NOT NULL,
+    FOREIGN KEY (web_user_id) REFERENCES public.web_user (id),
+    FOREIGN KEY (product_id) REFERENCES public.product (id)
+);
+
+CREATE TABLE public.belanja
+(
+    id              VARCHAR(32) PRIMARY KEY,
+    web_user_id     VARCHAR(32) NOT NULL,
+    date            TIMESTAMP WITH TIME ZONE NOT NULL,
+    product_id      VARCHAR(32) NOT NULL,
+    quantity        SMALLINT NOT NULL,
+    price           NUMERIC NOT NULL,
+    created_time    TIMESTAMP WITH TIME ZONE NOT NULL,
+    FOREIGN KEY (web_user_id) REFERENCES public.web_user (id),
+    FOREIGN KEY (product_id) REFERENCES public.product (id)
+);
+
+CREATE TABLE public.operasional
+(
+    id              VARCHAR(32) PRIMARY KEY,
+    web_user_id     VARCHAR(32) NOT NULL,
+    date            TIMESTAMP WITH TIME ZONE NOT NULL,
+    description     VARCHAR(256) NOT NULL,
+    quantity        SMALLINT NOT NULL,  
+    price           NUMERIC NOT NULL,
+    created_time    TIMESTAMP WITH TIME ZONE NOT NULL,
+    FOREIGN KEY (web_user_id) REFERENCES public.web_user (id)
+);

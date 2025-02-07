@@ -36,6 +36,35 @@ type TransactoionUsecase interface {
 	InsertTransactionBuy(request transactiondomain.InsertTransactionBuyRequestBulk) error
 	FindCustomerCredit(month time.Time, sell bool) (*transactiondomain.TransactionCredit, error)
 	FindCustomerReport(stakeholderId string, month time.Time) (*transactiondomain.LaporanCustomerSumary, error)
+
+	// mobile
+	FindDana(userID string, date time.Time) (*transactiondomain.DanaInquiryResponse, error)
+	CreateDana(userID string, request transactiondomain.DanaRequest) error
+	UpdateDana(userID string, request transactiondomain.DanaRequest) error
+	SendDana(userID string, request transactiondomain.DanaTransactionRequest) error
+	ApproveDana(userID string, id string) error
+	RejectDana(userID string, id string) error
+	CancelSendDana(userID string, id string) error
+	FindUserMobile(userID string) ([]transactiondomain.WebUserMobile, error)
+
+	// penjualan tunai
+	FindPenjualan(userID string, date time.Time) ([]transactiondomain.TrxInquiryResponse, error)
+	CreatePenjualan(userID string, request transactiondomain.TrxCreateRequest) error
+	DeletePenjualan(userID string, id string) error
+
+	// belanja
+	FindBelanja(userID string, date time.Time) ([]transactiondomain.TrxInquiryResponse, error)
+	CreateBelanja(userID string, request transactiondomain.TrxCreateRequest) error
+	DeleteBelanja(userID string, id string) error
+
+	// operasional
+	FindOperasional(userID string, date time.Time) ([]transactiondomain.TrxInquiryOperasionalResponse, error)
+	CreateOperasional(userID string, request transactiondomain.TrxCreateOperasionalRequest) error
+	DeleteOperasional(userID string, id string) error
+
+	// saldo
+	FindSaldo(userID string, date time.Time) (*transactiondomain.SaldoResponse, error)
+	FindRekapitulasi(date time.Time) (*transactiondomain.RekapitulasiResponse, error)
 }
 
 type Usecase struct {

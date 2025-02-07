@@ -32,6 +32,38 @@ type TransactionRepo interface {
 	FindLastCreditPerMonth(params []queryutil.Param) (map[string]map[int]float64, error)
 	FindLastCredit(params []queryutil.Param) (map[string]float64, error)
 	FindCustomerReport(stakeHolderID string, month time.Time) ([]*transactiondomain.LaporanCustomer, int, error)
+
+	// mobile
+	FindDana(userID string, date time.Time) (*transactiondomain.DanaInquiryResponse, error)
+	FindDanaByID(id string) (*transactiondomain.Dana, error)
+	CreateDana(userID string, request transactiondomain.DanaRequest) error
+	UpdateDana(userID string, request transactiondomain.DanaRequest) error
+	SendDana(userID string, request transactiondomain.DanaTransactionRequest) error
+	FindDanaTransaction(id string) (*transactiondomain.DanaTransaction, error)
+	ApproveDana(id string) error
+	RejectDana(id string) error
+	CancelSendDana(id string) error
+	CheckUserMobilePermission(id string) (bool, error)
+	FindUserMobile(id string) ([]transactiondomain.WebUserMobile, error)
+
+	// penjualan tunai
+	FindPenjualan(userID string, date time.Time) ([]transactiondomain.TrxInquiryResponse, error)
+	CreatePenjualan(userID string, request transactiondomain.TrxCreateRequest) error
+	DeletePenjualan(id string) error
+
+	// belanja
+	FindBelanja(userID string, date time.Time) ([]transactiondomain.TrxInquiryResponse, error)
+	CreateBelanja(userID string, request transactiondomain.TrxCreateRequest) error
+	DeleteBelanja(id string) error
+
+	// operasional
+	FindOperasional(userID string, date time.Time) ([]transactiondomain.TrxInquiryOperasionalResponse, error)
+	CreateOperasional(userID string, request transactiondomain.TrxCreateOperasionalRequest) error
+	DeleteOperasional(id string) error
+
+	// saldo
+	FindSaldo(userID string, date time.Time) (*transactiondomain.SaldoResponse, error)
+	FindRekapitulasi(date time.Time) (*transactiondomain.RekapitulasiResponse, error)
 }
 
 type Repo struct {

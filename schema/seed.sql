@@ -9,8 +9,9 @@ VALUES ('web:user', 'User', 0, 'user', 'fas fa-users'),
        ('web:role', 'Role', 1, 'role', 'fas fa-sitemap'),
        ('web:masterdata', 'Master Data', 2, 'master;price', 'fas fa-database'),
 --        ('web:price', 'Harga', 3, 'price', 'fas fa-rupiah-sign'),
-       ('web:transaction', 'Transaksi', 4, 'transaction;price', 'fas fa-money-bill')
---        ('web:report', 'Laporan', 5, 'report', 'fas fa-book')
+       ('web:transaction', 'Transaksi', 4, 'transaction;price', 'fas fa-money-bill'),
+--        ('web:report', 'Laporan', 5, 'report', 'fas fa-book'),
+       ('mobile', 'Mobile', -1, 'mobile', 'fas fa-mobile-alt')
 ;
 
 INSERT INTO sub_menu(id, menu_id, name, seq_order, outcome, icon)
@@ -32,7 +33,8 @@ VALUES ('web:user:createUser', 'web:user', 'Tambah Data', 0, '/user/register-use
        ('web:transaction:report', 'web:transaction', 'Laporan Transaksi', 4, '/transaction/report.html', 'fas fa-coins'),
        ('web:transaction:customerCredit', 'web:transaction', 'Laporan Piutang', 5, '/transaction/customer-credit.html', 'fas fa-clipboard-list'),
        ('web:transaction:customerSell', 'web:transaction', 'Laporan Penjualan', 6, '/transaction/customer-sell.html', 'fas fa-clipboard-list'),
-       ('web:transaction:customerReport', 'web:transaction', 'Laporan Customer', 7, '/transaction/customer-report.html', 'fas fa-clipboard-list')
+       ('web:transaction:customerReport', 'web:transaction', 'Laporan Customer', 7, '/transaction/customer-report.html', 'fas fa-clipboard-list'),
+       ('mobile', 'mobile', 'Mobile', -1, '', 'fas fa-clipboard-list')
 ;
 
 ------------ PERMISSION -------------
@@ -65,7 +67,9 @@ VALUES ('web:user:createUser', 'web:user:createUser', 'Registrasi', 0, '/api/rol
        ('web:transaction:buy:add', 'web:transaction:buy', 'Pembelian', 0, '/api/transaction/insertTransactionBuy;/api/unit/find;/api/supplier/find;/api/product/find;'),
        ('web:transaction:customerCredit:view', 'web:transaction:customerCredit', 'Lihat Laporan Piutang', 0, '/api/transaction/findCustomerCredit'),
        ('web:transaction:customerSell:view', 'web:transaction:customerSell', 'Lihat Laporan Penjualan', 0, '/api/transaction/findCustomerCredit'),
-       ('web:transaction:customerReport:view', 'web:transaction:customerReport', 'Lihat Laporan Customer', 0, '/api/transaction/findCustomerReport;/api/customer/find')
+       ('web:transaction:customerReport:view', 'web:transaction:customerReport', 'Lihat Laporan Customer', 0, '/api/transaction/findCustomerReport;/api/customer/find'),
+       ('web:transaction:mobile:dana:send', 'web:transaction:mobile', 'Kirim Dana', 0, '/api/transaction/mobile/dana/send'),
+       ('mobile', 'mobile', 'Purchasing', -1, '/api/mobile/dana/find;/api/mobile/dana/create;/api/mobile/dana/update;/api/mobile/dana/send;/api/mobile/dana/approve;/api/mobile/dana/reject;/api/mobile/dana/cancel;/api/mobile/dana/find-user;/api/product/findActive;/api/mobile/penjualan/create;/api/mobile/penjualan/delete;/api/mobile/penjualan/find;/api/mobile/belanja/create;/api/mobile/belanja/delete;/api/mobile/belanja/find;/api/mobile/operasional/create;/api/mobile/operasional/delete;/api/mobile/operasional/find;/api/mobile/operasional/find-description;/api/mobile/rekapitulasi;/api/mobile/saldo')
 ;
 
 ----------------- ROLE ---------------
