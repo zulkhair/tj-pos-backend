@@ -8,9 +8,10 @@ import (
 	dateutil "dromatech/pos-backend/internal/util/date"
 	queryutil "dromatech/pos-backend/internal/util/query"
 	"fmt"
+	"time"
+
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"time"
 )
 
 type KontrabonRepo interface {
@@ -61,7 +62,7 @@ func (r *Repo) Find(params []queryutil.Param) ([]*kontrabondomain.KontrabonRespo
 		"JOIN public.kontrabon_transaction kt ON (kt.kontrabon_id = k.id) "+
 		"JOIN public.transaction t ON (t.id = kt.transaction_id) "+
 		"JOIN public.transaction_detail td ON (td.transaction_id = t.id)"+
-		"%s GROUP BY k.id, k.code, k.created_time, k.status ORDER BY k.code ASC, k.created_time ASC", where), values...).Rows()
+		"%s GROUP BY k.id, k.code, k.created_time, k.status ORDER BY k.created_time DESC, k.code ASC", where), values...).Rows()
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, err
